@@ -1,4 +1,4 @@
-This package is under development and is UNSTABLE. Please check back in later.
+Development on this package is on hold until there is clarity on whether generics will be added for Go 2. Please check back in later.
 
 See https://godoc.org/github.com/pkg/diff for usage and docs.
 
