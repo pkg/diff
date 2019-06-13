@@ -27,9 +27,9 @@ type Writeable interface {
 	FilenameB() string
 }
 
-// DiffWriteable is the union of Diffable and Writeable.
+// DiffableWriteable is the union of Diffable and Writeable.
 // TODO: better name
-type DiffWriteable interface {
+type DiffableWriteable interface {
 	Diffable
 	Writeable
 }

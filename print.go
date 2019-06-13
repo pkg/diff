@@ -59,7 +59,7 @@ func (e EditScript) WriteUnified(w io.Writer, ab Writeable) (int, error) {
 
 		// Print chunk header.
 		// TODO: add per-chunk context, like what function we're in
-		// But how do we get this? need to add DiffWriteable methods?
+		// But how do we get this? need to add DiffableWriteable methods?
 		// Maybe it should be stored in the EditScript,
 		// and we can have EditScript methods to populate it somehow?
 		fmt.Fprintf(w, "@@ -%s +%s @@\n", ar, br)
