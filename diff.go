@@ -93,7 +93,7 @@ type EditScript struct {
 
 // IsIdentity reports whether e is the identity edit script, that is, whether A and B are identical.
 // See the TestHelper example.
-func (e *EditScript) IsIdentity() bool {
+func (e EditScript) IsIdentity() bool {
 	for _, seg := range e.segs {
 		if seg.op() != eq {
 			return false
@@ -113,9 +113,9 @@ func scriptWithSegments(s ...segment) EditScript {
 }
 
 // dump formats s for debugging.
-func (s EditScript) dump() string {
+func (e EditScript) dump() string {
 	buf := new(bytes.Buffer)
-	for _, seg := range s.segs {
+	for _, seg := range e.segs {
 		fmt.Fprintln(buf, seg)
 	}
 	return buf.String()
