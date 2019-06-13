@@ -6,7 +6,7 @@ import (
 	"io"
 )
 
-// A type that satisfies Diffable can be diffed using Myers.
+// A Diffable type can be diffed using Myers.
 // A is the initial state; B is the final state.
 type Diffable interface {
 	LenA() int
@@ -14,12 +14,16 @@ type Diffable interface {
 	Equal(ai, bi int) bool
 }
 
-// A type that is Writeable can be written using WriteUnified.
+// A Writeable type can be written using WriteUnified.
 // A is the initial state; B is the final state.
 type Writeable interface {
-	WriteToA(w io.Writer, i int) (int, error)
-	WriteToB(w io.Writer, i int) (int, error)
+	// WriteATo writes the element a[idx] to w.
+	WriteATo(w io.Writer, idx int) (int, error)
+	// WriteBTo writes the element b[idx] to w.
+	WriteBTo(w io.Writer, idx int) (int, error)
+	// FilenameA returns the filename to use for a.
 	FilenameA() string
+	// FilenameB returns the filename to use for b.
 	FilenameB() string
 }
 

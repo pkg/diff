@@ -72,21 +72,21 @@ func (e EditScript) WriteUnified(w io.Writer, ab Writeable) (int, error) {
 				for m := seg.FromA; m < seg.ToA; m++ {
 					// " a[m]\n"
 					w.Write([]byte{' '})
-					ab.WriteToA(w, m)
+					ab.WriteATo(w, m)
 					w.Write([]byte{'\n'})
 				}
 			case del:
 				for m := seg.FromA; m < seg.ToA; m++ {
 					// "-a[m]\n"
 					w.Write([]byte{'-'})
-					ab.WriteToA(w, m)
+					ab.WriteATo(w, m)
 					w.Write([]byte{'\n'})
 				}
 			case ins:
 				for m := seg.FromB; m < seg.ToB; m++ {
 					// "+b[m]\n"
 					w.Write([]byte{'+'})
-					ab.WriteToB(w, m)
+					ab.WriteBTo(w, m)
 					w.Write([]byte{'\n'})
 				}
 			}

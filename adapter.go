@@ -20,8 +20,8 @@ type diffStrings struct {
 func (ab *diffStrings) LenA() int                                { return len(ab.a) }
 func (ab *diffStrings) LenB() int                                { return len(ab.b) }
 func (ab *diffStrings) Equal(ai, bi int) bool                    { return ab.a[ai] == ab.b[bi] }
-func (ab *diffStrings) WriteToA(w io.Writer, i int) (int, error) { return io.WriteString(w, ab.a[i]) }
-func (ab *diffStrings) WriteToB(w io.Writer, i int) (int, error) { return io.WriteString(w, ab.b[i]) }
+func (ab *diffStrings) WriteATo(w io.Writer, i int) (int, error) { return io.WriteString(w, ab.a[i]) }
+func (ab *diffStrings) WriteBTo(w io.Writer, i int) (int, error) { return io.WriteString(w, ab.b[i]) }
 
 // Bytes returns a DiffWriteable that diffs a and b.
 func Bytes(a, b [][]byte) DiffWriteable {
@@ -36,8 +36,8 @@ type diffBytes struct {
 func (ab *diffBytes) LenA() int                                { return len(ab.a) }
 func (ab *diffBytes) LenB() int                                { return len(ab.b) }
 func (ab *diffBytes) Equal(ai, bi int) bool                    { return bytes.Equal(ab.a[ai], ab.b[bi]) }
-func (ab *diffBytes) WriteToA(w io.Writer, i int) (int, error) { return w.Write(ab.a[i]) }
-func (ab *diffBytes) WriteToB(w io.Writer, i int) (int, error) { return w.Write(ab.b[i]) }
+func (ab *diffBytes) WriteATo(w io.Writer, i int) (int, error) { return w.Write(ab.a[i]) }
+func (ab *diffBytes) WriteBTo(w io.Writer, i int) (int, error) { return w.Write(ab.b[i]) }
 
 // Slices returns a DiffWriteable that diffs a and b.
 // It uses fmt.Print to print the elements of a and b.
@@ -65,8 +65,8 @@ func (ab *diffSlices) LenB() int                                { return ab.b.Le
 func (ab *diffSlices) atA(i int) interface{}                    { return ab.a.Index(i).Interface() }
 func (ab *diffSlices) atB(i int) interface{}                    { return ab.b.Index(i).Interface() }
 func (ab *diffSlices) Equal(ai, bi int) bool                    { return ab.eq(ab.atA(ai), ab.atB(bi)) }
-func (ab *diffSlices) WriteToA(w io.Writer, i int) (int, error) { return fmt.Fprint(w, ab.atA(i)) }
-func (ab *diffSlices) WriteToB(w io.Writer, i int) (int, error) { return fmt.Fprint(w, ab.atB(i)) }
+func (ab *diffSlices) WriteATo(w io.Writer, i int) (int, error) { return fmt.Fprint(w, ab.atA(i)) }
+func (ab *diffSlices) WriteBTo(w io.Writer, i int) (int, error) { return fmt.Fprint(w, ab.atB(i)) }
 
 // defaultFilenames provides FilenameA == "a" and FilenameB == "b".
 type defaultFilenames struct{}
