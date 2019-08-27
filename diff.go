@@ -9,8 +9,11 @@ import (
 // A Diffable type can be diffed using Myers.
 // A is the initial state; B is the final state.
 type Diffable interface {
+	// LenA returns the number of initial elements.
 	LenA() int
+	// LenA returns the number of final elements.
 	LenB() int
+	// Equal reports whether the ai'th element of A is equal to the bi'th element of B.
 	Equal(ai, bi int) bool
 }
 
