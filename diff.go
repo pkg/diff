@@ -21,10 +21,10 @@ type Writeable interface {
 	WriteATo(w io.Writer, idx int) (int, error)
 	// WriteBTo writes the element b[idx] to w.
 	WriteBTo(w io.Writer, idx int) (int, error)
-	// FilenameA returns the filename to use for a.
-	FilenameA() string
-	// FilenameB returns the filename to use for b.
-	FilenameB() string
+	// NameA returns the name to use for a, commonly a filename.
+	NameA() string
+	// NameB returns the name to use for b, commonly a filename.
+	NameB() string
 }
 
 // DiffableWriteable is the union of Diffable and Writeable.

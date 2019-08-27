@@ -13,7 +13,7 @@ func Strings(a, b []string) DiffableWriteable {
 }
 
 type diffStrings struct {
-	defaultFilenames
+	defaultNames
 	a, b []string
 }
 
@@ -29,7 +29,7 @@ func Bytes(a, b [][]byte) DiffableWriteable {
 }
 
 type diffBytes struct {
-	defaultFilenames
+	defaultNames
 	a, b [][]byte
 }
 
@@ -55,7 +55,7 @@ func Slices(a, b interface{}, equal func(x, y interface{}) bool) DiffableWriteab
 }
 
 type diffSlices struct {
-	defaultFilenames
+	defaultNames
 	a, b reflect.Value
 	eq   func(x, y interface{}) bool
 }
@@ -68,11 +68,11 @@ func (ab *diffSlices) Equal(ai, bi int) bool                    { return ab.eq(a
 func (ab *diffSlices) WriteATo(w io.Writer, i int) (int, error) { return fmt.Fprint(w, ab.atA(i)) }
 func (ab *diffSlices) WriteBTo(w io.Writer, i int) (int, error) { return fmt.Fprint(w, ab.atB(i)) }
 
-// defaultFilenames provides FilenameA == "a" and FilenameB == "b".
-type defaultFilenames struct{}
+// defaultNames provides NameA == "a" and NameB == "b".
+type defaultNames struct{}
 
-func (ab defaultFilenames) FilenameA() string { return "a" }
-func (ab defaultFilenames) FilenameB() string { return "b" }
+func (ab defaultNames) NameA() string { return "a" }
+func (ab defaultNames) NameB() string { return "b" }
 
 // TODO: consider adding a LargeFile wrapper.
 // It should read each file once, storing the location of all newlines in each file,

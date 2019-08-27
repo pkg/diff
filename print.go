@@ -20,8 +20,8 @@ func (e EditScript) WriteUnified(w io.Writer, ab Writeable) (int, error) {
 
 	// per-file header
 	// TODO: add date/time/timezone methods to ab and use them here
-	fmt.Fprintf(w, "--- %s\n", ab.FilenameA())
-	fmt.Fprintf(w, "+++ %s\n", ab.FilenameB())
+	fmt.Fprintf(w, "--- %s\n", ab.NameA())
+	fmt.Fprintf(w, "+++ %s\n", ab.NameB())
 
 	for i := 0; i < len(e.segs); {
 		// Peek into the future to learn the line ranges for this chunk of output.
