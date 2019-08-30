@@ -15,9 +15,7 @@ Useful background reading about diffs:
 TODO before declaring this package stable:
 
 * API review. Some open questions:
-  - Pair won't suffice for other diff algorithms, like patience diff or using indentation-based heuristics. That's probably ok, but input welcome.
-  - Writeable won't suffice if we want to add dates/times/timezones to unified diff output. Do we?
-  - Do we want a single union Writeable interface for all possible kinds of EditScript printing? If not, what should this one be called?
+  - Pair won't suffice for other diff algorithms, like patience diff or using indentation-based heuristics. Writer/WriteOpts might not suffice for other writing formats. We'll probably just need to cross that bridge when we get to it, but our current names might be too general.
   - Should there be some way to step through an EditScript manually? E.g. for use in a system that uses the diff to perform actions to get to a desired end state.
   - I've long wanted a way to vary the number of lines of context depending on content. For example, if I deleted the first line of a function, I don't need three full lines of "before" context; it should truncate at the function declaration. Do we have enough state to store such information, if needed? (Would it be better to make EditScript an interface?)
   - What is the compatibility guarantee? Do we guarantee the exact same diff given the same input? If not, it is less useful for other peoples' golden tests, but it really ties the hands of the package authors; it'd be nice to be able to generate better diffs over time.

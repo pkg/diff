@@ -11,17 +11,48 @@ import (
 // TODO: add html diffs (?)
 // TODO: add intraline highlighting?
 
-// WriteUnified writes e to w using unified diff format, using ab to write the individual elements.
-// It returns the number of bytes written successfully and the first error (if any) encountered.
-func (e EditScript) WriteUnified(w io.Writer, ab Writeable) (int, error) {
+// A WriteOpt is used to provide options when writing a diff.
+type WriteOpt interface {
+	isWriteOpt()
+}
+
+// Names provides the before/after names for writing a diff.
+// They are traditionally filenames.
+func Names(a, b string) WriteOpt {
+	return names{a, b}
+}
+
+type names struct {
+	a, b string
+}
+
+func (names) isWriteOpt() {}
+
+// WriteUnified writes e to w using unified diff format.
+// ab writes the individual elements. Opts are optional write arguments.
+// WriteUnified returns the number of bytes written and the first error (if any) encountered.
+func (e EditScript) WriteUnified(w io.Writer, ab WriterTo, opts ...WriteOpt) (int, error) {
+	// read opts
+	nameA := "a"
+	nameB := "b"
+	for _, opt := range opts {
+		switch opt := opt.(type) {
+		case names:
+			nameA = opt.a
+			nameB = opt.b
+		// TODO: add date/time/timezone WriteOpts
+		default:
+			panic(fmt.Sprintf("unrecognized WriteOpt type %T", opt))
+		}
+	}
+
 	w = newErrWriter(w)
 	// TODO: Wrap w in a bufio.Writer? And then use w.WriteByte below instead of w.Write.
 	// Maybe bufio.Writer is enough and we should entirely ditch newErrWriter.
 
 	// per-file header
-	// TODO: add date/time/timezone methods to ab and use them here
-	fmt.Fprintf(w, "--- %s\n", ab.NameA())
-	fmt.Fprintf(w, "+++ %s\n", ab.NameB())
+	fmt.Fprintf(w, "--- %s\n", nameA)
+	fmt.Fprintf(w, "+++ %s\n", nameB)
 
 	for i := 0; i < len(e.segs); {
 		// Peek into the future to learn the line ranges for this chunk of output.
@@ -59,7 +90,7 @@ func (e EditScript) WriteUnified(w io.Writer, ab Writeable) (int, error) {
 
 		// Print chunk header.
 		// TODO: add per-chunk context, like what function we're in
-		// But how do we get this? need to add PairWriteable methods?
+		// But how do we get this? need to add PairWriter methods?
 		// Maybe it should be stored in the EditScript,
 		// and we can have EditScript methods to populate it somehow?
 		fmt.Fprintf(w, "@@ -%s +%s @@\n", ar, br)

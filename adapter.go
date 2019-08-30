@@ -7,13 +7,12 @@ import (
 	"reflect"
 )
 
-// Strings returns a PairWriteable that diffs a and b.
-func Strings(a, b []string) PairWriteable {
+// Strings returns a PairWriterTo that can diff and write a and b.
+func Strings(a, b []string) PairWriterTo {
 	return &diffStrings{a: a, b: b}
 }
 
 type diffStrings struct {
-	defaultNames
 	a, b []string
 }
 
@@ -23,13 +22,12 @@ func (ab *diffStrings) Equal(ai, bi int) bool                    { return ab.a[a
 func (ab *diffStrings) WriteATo(w io.Writer, i int) (int, error) { return io.WriteString(w, ab.a[i]) }
 func (ab *diffStrings) WriteBTo(w io.Writer, i int) (int, error) { return io.WriteString(w, ab.b[i]) }
 
-// Bytes returns a PairWriteable that diffs a and b.
-func Bytes(a, b [][]byte) PairWriteable {
+// Bytes returns a PairWriterTo that can diff and write a and b.
+func Bytes(a, b [][]byte) PairWriterTo {
 	return &diffBytes{a: a, b: b}
 }
 
 type diffBytes struct {
-	defaultNames
 	a, b [][]byte
 }
 
@@ -39,11 +37,11 @@ func (ab *diffBytes) Equal(ai, bi int) bool                    { return bytes.Eq
 func (ab *diffBytes) WriteATo(w io.Writer, i int) (int, error) { return w.Write(ab.a[i]) }
 func (ab *diffBytes) WriteBTo(w io.Writer, i int) (int, error) { return w.Write(ab.b[i]) }
 
-// Slices returns a PairWriteable that diffs a and b.
+// Slices returns a PairWriterTo that diffs a and b.
 // It uses fmt.Print to print the elements of a and b.
 // It uses equal to compare elements of a and b;
 // if equal is nil, Slices uses reflect.DeepEqual.
-func Slices(a, b interface{}, equal func(x, y interface{}) bool) PairWriteable {
+func Slices(a, b interface{}, equal func(x, y interface{}) bool) PairWriterTo {
 	if equal == nil {
 		equal = reflect.DeepEqual
 	}
@@ -55,7 +53,6 @@ func Slices(a, b interface{}, equal func(x, y interface{}) bool) PairWriteable {
 }
 
 type diffSlices struct {
-	defaultNames
 	a, b reflect.Value
 	eq   func(x, y interface{}) bool
 }
@@ -67,12 +64,6 @@ func (ab *diffSlices) atB(i int) interface{}                    { return ab.b.In
 func (ab *diffSlices) Equal(ai, bi int) bool                    { return ab.eq(ab.atA(ai), ab.atB(bi)) }
 func (ab *diffSlices) WriteATo(w io.Writer, i int) (int, error) { return fmt.Fprint(w, ab.atA(i)) }
 func (ab *diffSlices) WriteBTo(w io.Writer, i int) (int, error) { return fmt.Fprint(w, ab.atB(i)) }
-
-// defaultNames provides NameA == "a" and NameB == "b".
-type defaultNames struct{}
-
-func (ab defaultNames) NameA() string { return "a" }
-func (ab defaultNames) NameB() string { return "b" }
 
 // TODO: consider adding a LargeFile wrapper.
 // It should read each file once, storing the location of all newlines in each file,

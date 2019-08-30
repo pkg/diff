@@ -43,3 +43,19 @@ func Example_strings() {
 	//  c
 	// +d
 }
+
+func Example_Names() {
+	a := []string{"a", "b", "c"}
+	b := []string{"a", "c", "d"}
+	ab := diff.Strings(a, b)
+	e := diff.Myers(context.Background(), ab)
+	e.WriteUnified(os.Stdout, ab, diff.Names("before", "after"))
+	// Output:
+	// --- before
+	// +++ after
+	// @@ -1,3 +1,3 @@
+	//  a
+	// -b
+	//  c
+	// +d
+}

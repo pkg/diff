@@ -17,24 +17,19 @@ type Pair interface {
 	Equal(ai, bi int) bool
 }
 
-// A Writeable type can be written using WriteUnified.
+// A WriterTo type supports writing a diff, element by element.
 // A is the initial state; B is the final state.
-type Writeable interface {
-	// WriteATo writes the element a[idx] to w.
-	WriteATo(w io.Writer, idx int) (int, error)
-	// WriteBTo writes the element b[idx] to w.
-	WriteBTo(w io.Writer, idx int) (int, error)
-	// NameA returns the name to use for a, commonly a filename.
-	NameA() string
-	// NameB returns the name to use for b, commonly a filename.
-	NameB() string
+type WriterTo interface {
+	// WriteATo writes the element a[ai] to w.
+	WriteATo(w io.Writer, ai int) (int, error)
+	// WriteBTo writes the element b[bi] to w.
+	WriteBTo(w io.Writer, bi int) (int, error)
 }
 
-// PairWriteable is the union of Pair and Writeable.
-// TODO: better name
-type PairWriteable interface {
+// PairWriterTo is the union of Pair and WriterTo.
+type PairWriterTo interface {
 	Pair
-	Writeable
+	WriterTo
 }
 
 // TODO: consider adding a StringIntern type, something like:
