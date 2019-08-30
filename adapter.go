@@ -7,8 +7,8 @@ import (
 	"reflect"
 )
 
-// Strings returns a DiffableWriteable that diffs a and b.
-func Strings(a, b []string) DiffableWriteable {
+// Strings returns a PairWriteable that diffs a and b.
+func Strings(a, b []string) PairWriteable {
 	return &diffStrings{a: a, b: b}
 }
 
@@ -23,8 +23,8 @@ func (ab *diffStrings) Equal(ai, bi int) bool                    { return ab.a[a
 func (ab *diffStrings) WriteATo(w io.Writer, i int) (int, error) { return io.WriteString(w, ab.a[i]) }
 func (ab *diffStrings) WriteBTo(w io.Writer, i int) (int, error) { return io.WriteString(w, ab.b[i]) }
 
-// Bytes returns a DiffableWriteable that diffs a and b.
-func Bytes(a, b [][]byte) DiffableWriteable {
+// Bytes returns a PairWriteable that diffs a and b.
+func Bytes(a, b [][]byte) PairWriteable {
 	return &diffBytes{a: a, b: b}
 }
 
@@ -39,11 +39,11 @@ func (ab *diffBytes) Equal(ai, bi int) bool                    { return bytes.Eq
 func (ab *diffBytes) WriteATo(w io.Writer, i int) (int, error) { return w.Write(ab.a[i]) }
 func (ab *diffBytes) WriteBTo(w io.Writer, i int) (int, error) { return w.Write(ab.b[i]) }
 
-// Slices returns a DiffableWriteable that diffs a and b.
+// Slices returns a PairWriteable that diffs a and b.
 // It uses fmt.Print to print the elements of a and b.
 // It uses equal to compare elements of a and b;
 // if equal is nil, Slices uses reflect.DeepEqual.
-func Slices(a, b interface{}, equal func(x, y interface{}) bool) DiffableWriteable {
+func Slices(a, b interface{}, equal func(x, y interface{}) bool) PairWriteable {
 	if equal == nil {
 		equal = reflect.DeepEqual
 	}

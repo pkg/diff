@@ -7,7 +7,7 @@ import (
 
 // Myers calculates an EditScript (diff) for ab using the Myers diff algorithm.
 // Because diff calculation can be expensive, Myers supports cancellation via ctx.
-func Myers(ctx context.Context, ab Diffable) EditScript {
+func Myers(ctx context.Context, ab Pair) EditScript {
 	aLen := ab.LenA()
 	bLen := ab.LenB()
 	if aLen == 0 {

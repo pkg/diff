@@ -15,7 +15,7 @@ Useful background reading about diffs:
 TODO before declaring this package stable:
 
 * API review. Some open questions:
-  - Diffable won't suffice for other diff algorithms, like patience diff or using indentation-based heuristics. That's probably ok, but input welcome.
+  - Pair won't suffice for other diff algorithms, like patience diff or using indentation-based heuristics. That's probably ok, but input welcome.
   - Writeable won't suffice if we want to add dates/times/timezones to unified diff output. Do we?
   - Do we want a single union Writeable interface for all possible kinds of EditScript printing? If not, what should this one be called?
   - Should there be some way to step through an EditScript manually? E.g. for use in a system that uses the diff to perform actions to get to a desired end state.

@@ -6,9 +6,9 @@ import (
 	"io"
 )
 
-// A Diffable type can be diffed using Myers.
+// A Pair is two things that can be diffed using the Myers diff algorithm.
 // A is the initial state; B is the final state.
-type Diffable interface {
+type Pair interface {
 	// LenA returns the number of initial elements.
 	LenA() int
 	// LenA returns the number of final elements.
@@ -30,10 +30,10 @@ type Writeable interface {
 	NameB() string
 }
 
-// DiffableWriteable is the union of Diffable and Writeable.
+// PairWriteable is the union of Pair and Writeable.
 // TODO: better name
-type DiffableWriteable interface {
-	Diffable
+type PairWriteable interface {
+	Pair
 	Writeable
 }
 
