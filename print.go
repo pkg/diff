@@ -6,10 +6,10 @@ import (
 )
 
 // TODO: add diff writing that uses < and > (don't know what that is called)
-// TODO: add colorized diff writing utilities?
 // TODO: add side by side diffs
 // TODO: add html diffs (?)
 // TODO: add intraline highlighting?
+// TODO: a way to specify alternative colors, like a ColorScheme write option
 
 // A WriteOpt is used to provide options when writing a diff.
 type WriteOpt interface {
@@ -28,6 +28,24 @@ type names struct {
 
 func (names) isWriteOpt() {}
 
+// TerminalColor specifies that a diff intended for a terminal should be written
+// using red and green colors.
+//
+// Do not use TerminalColor if TERM=dumb is set in the environment.
+func TerminalColor() WriteOpt {
+	return colorOpt(true)
+}
+
+type colorOpt bool
+
+func (colorOpt) isWriteOpt() {}
+
+const (
+	ansiFgRed   = "\u001b[31m"
+	ansiFgGreen = "\u001b[32m"
+	ansiReset   = "\u001b[0m"
+)
+
 // WriteUnified writes e to w using unified diff format.
 // ab writes the individual elements. Opts are optional write arguments.
 // WriteUnified returns the number of bytes written and the first error (if any) encountered.
@@ -35,11 +53,15 @@ func (e EditScript) WriteUnified(w io.Writer, ab WriterTo, opts ...WriteOpt) (in
 	// read opts
 	nameA := "a"
 	nameB := "b"
+	color := false
 	for _, opt := range opts {
 		switch opt := opt.(type) {
 		case names:
 			nameA = opt.a
 			nameB = opt.b
+		case colorOpt:
+			// TODO: color "---" and "@@" lines too?
+			color = true
 		// TODO: add date/time/timezone WriteOpts
 		default:
 			panic(fmt.Sprintf("unrecognized WriteOpt type %T", opt))
@@ -53,6 +75,8 @@ func (e EditScript) WriteUnified(w io.Writer, ab WriterTo, opts ...WriteOpt) (in
 	// per-file header
 	fmt.Fprintf(w, "--- %s\n", nameA)
 	fmt.Fprintf(w, "+++ %s\n", nameB)
+
+	needsColorReset := false
 
 	for i := 0; i < len(e.segs); {
 		// Peek into the future to learn the line ranges for this chunk of output.
@@ -100,6 +124,9 @@ func (e EditScript) WriteUnified(w io.Writer, ab WriterTo, opts ...WriteOpt) (in
 			seg := e.segs[k]
 			switch seg.op() {
 			case eq:
+				if needsColorReset {
+					w.Write([]byte(ansiReset))
+				}
 				for m := seg.FromA; m < seg.ToA; m++ {
 					// " a[m]\n"
 					w.Write([]byte{' '})
@@ -107,6 +134,10 @@ func (e EditScript) WriteUnified(w io.Writer, ab WriterTo, opts ...WriteOpt) (in
 					w.Write([]byte{'\n'})
 				}
 			case del:
+				if color {
+					w.Write([]byte(ansiFgRed))
+					needsColorReset = true
+				}
 				for m := seg.FromA; m < seg.ToA; m++ {
 					// "-a[m]\n"
 					w.Write([]byte{'-'})
@@ -114,6 +145,10 @@ func (e EditScript) WriteUnified(w io.Writer, ab WriterTo, opts ...WriteOpt) (in
 					w.Write([]byte{'\n'})
 				}
 			case ins:
+				if color {
+					w.Write([]byte(ansiFgGreen))
+					needsColorReset = true
+				}
 				for m := seg.FromB; m < seg.ToB; m++ {
 					// "+b[m]\n"
 					w.Write([]byte{'+'})
@@ -127,6 +162,12 @@ func (e EditScript) WriteUnified(w io.Writer, ab WriterTo, opts ...WriteOpt) (in
 		i = j + 1
 
 		// TODO: break if error detected?
+	}
+
+	// Always finish the output with no color, to prevent "leaking" the
+	// color into any output that follows a diff.
+	if needsColorReset {
+		w.Write([]byte(ansiReset))
 	}
 
 	// TODO:

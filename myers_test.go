@@ -13,26 +13,26 @@ func TestMyers(t *testing.T) {
 		want []segment
 	}{
 		{
-			name: "basic example",
+			name: "BasicExample",
 			a:    "ABCABBA",
 			b:    "CBABAC",
 			want: []segment{
-				segment{FromA: 0, ToA: 2, FromB: 0, ToB: 0},
-				segment{FromA: 2, ToA: 3, FromB: 0, ToB: 1},
-				segment{FromA: 3, ToA: 3, FromB: 1, ToB: 2},
-				segment{FromA: 3, ToA: 5, FromB: 2, ToB: 4},
-				segment{FromA: 5, ToA: 6, FromB: 4, ToB: 4},
-				segment{FromA: 6, ToA: 7, FromB: 4, ToB: 5},
-				segment{FromA: 7, ToA: 7, FromB: 5, ToB: 6},
+				{FromA: 0, ToA: 2, FromB: 0, ToB: 0},
+				{FromA: 2, ToA: 3, FromB: 0, ToB: 1},
+				{FromA: 3, ToA: 3, FromB: 1, ToB: 2},
+				{FromA: 3, ToA: 5, FromB: 2, ToB: 4},
+				{FromA: 5, ToA: 6, FromB: 4, ToB: 4},
+				{FromA: 6, ToA: 7, FromB: 4, ToB: 5},
+				{FromA: 7, ToA: 7, FromB: 5, ToB: 6},
 			},
 		},
 		{
-			name: "all different",
+			name: "AllDifferent",
 			a:    "ABCDE",
 			b:    "xyz",
 			want: []segment{
-				segment{FromA: 0, ToA: 5, FromB: 0, ToB: 0},
-				segment{FromA: 0, ToA: 0, FromB: 0, ToB: 3},
+				{FromA: 0, ToA: 5, FromB: 0, ToB: 0},
+				{FromA: 0, ToA: 0, FromB: 0, ToB: 3},
 			},
 		},
 		// TODO: add more tests
