@@ -68,13 +68,13 @@ func (e EditScript) WriteUnified(w io.Writer, ab WriterTo, opts ...WriteOpt) (in
 		}
 	}
 
-	w = newErrWriter(w)
+	ew := newErrWriter(w)
 	// TODO: Wrap w in a bufio.Writer? And then use w.WriteByte below instead of w.Write.
 	// Maybe bufio.Writer is enough and we should entirely ditch newErrWriter.
 
 	// per-file header
-	fmt.Fprintf(w, "--- %s\n", nameA)
-	fmt.Fprintf(w, "+++ %s\n", nameB)
+	fmt.Fprintf(ew, "--- %s\n", nameA)
+	fmt.Fprintf(ew, "+++ %s\n", nameB)
 
 	needsColorReset := false
 
@@ -117,7 +117,7 @@ func (e EditScript) WriteUnified(w io.Writer, ab WriterTo, opts ...WriteOpt) (in
 		// But how do we get this? need to add PairWriter methods?
 		// Maybe it should be stored in the EditScript,
 		// and we can have EditScript methods to populate it somehow?
-		fmt.Fprintf(w, "@@ -%s +%s @@\n", ar, br)
+		fmt.Fprintf(ew, "@@ -%s +%s @@\n", ar, br)
 
 		// Print prefixed lines.
 		for k := i; k <= j; k++ {
@@ -125,35 +125,35 @@ func (e EditScript) WriteUnified(w io.Writer, ab WriterTo, opts ...WriteOpt) (in
 			switch seg.op() {
 			case eq:
 				if needsColorReset {
-					w.Write([]byte(ansiReset))
+					ew.WriteString(ansiReset)
 				}
 				for m := seg.FromA; m < seg.ToA; m++ {
 					// " a[m]\n"
-					w.Write([]byte{' '})
-					ab.WriteATo(w, m)
-					w.Write([]byte{'\n'})
+					ew.WriteByte(' ')
+					ab.WriteATo(ew, m)
+					ew.WriteByte('\n')
 				}
 			case del:
 				if color {
-					w.Write([]byte(ansiFgRed))
+					ew.WriteString(ansiFgRed)
 					needsColorReset = true
 				}
 				for m := seg.FromA; m < seg.ToA; m++ {
 					// "-a[m]\n"
-					w.Write([]byte{'-'})
-					ab.WriteATo(w, m)
-					w.Write([]byte{'\n'})
+					ew.WriteByte('-')
+					ab.WriteATo(ew, m)
+					ew.WriteByte('\n')
 				}
 			case ins:
 				if color {
-					w.Write([]byte(ansiFgGreen))
+					ew.WriteString(ansiFgGreen)
 					needsColorReset = true
 				}
 				for m := seg.FromB; m < seg.ToB; m++ {
 					// "+b[m]\n"
-					w.Write([]byte{'+'})
-					ab.WriteBTo(w, m)
-					w.Write([]byte{'\n'})
+					ew.WriteByte('+')
+					ab.WriteBTo(ew, m)
+					ew.WriteByte('\n')
 				}
 			}
 		}
@@ -167,7 +167,7 @@ func (e EditScript) WriteUnified(w io.Writer, ab WriterTo, opts ...WriteOpt) (in
 	// Always finish the output with no color, to prevent "leaking" the
 	// color into any output that follows a diff.
 	if needsColorReset {
-		w.Write([]byte(ansiReset))
+		ew.WriteString(ansiReset)
 	}
 
 	// TODO:
@@ -176,7 +176,6 @@ func (e EditScript) WriteUnified(w io.Writer, ab WriterTo, opts ...WriteOpt) (in
 	// and the following line in the chunk has the literal text (starting in the first column):
 	// '\ No newline at end of file'
 
-	ew := w.(*errwriter)
 	return ew.wrote, ew.Error()
 }
 
@@ -219,6 +218,16 @@ func (w *errwriter) Write(b []byte) (int, error) {
 	}
 	w.wrote += n
 	return n, err
+}
+
+func (w *errwriter) WriteString(s string) {
+	// TODO: use w.w's WriteString method, if it exists
+	w.Write([]byte(s))
+}
+
+func (w *errwriter) WriteByte(b byte) {
+	// TODO: use w.w's WriteByte method, if it exists
+	w.Write([]byte{b})
 }
 
 func (w *errwriter) Error() error { return w.err }
