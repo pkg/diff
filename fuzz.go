@@ -10,9 +10,12 @@ import (
 )
 
 func Fuzz(data []byte) int {
-	if len(data) == 0 {
+	if len(data) < 2 {
 		return -1
 	}
+	sz := int(data[0])
+	data = data[1:]
+
 	nul := bytes.IndexByte(data, 0)
 	if nul == -1 {
 		nul = len(data) - 1
@@ -21,6 +24,7 @@ func Fuzz(data []byte) int {
 	b := data[nul:]
 	ab := &IndividualBytes{a: a, b: b}
 	e := Myers(context.Background(), ab)
+	e = e.WithContextSize(sz)
 	e.WriteUnified(ioutil.Discard, ab)
 	return 0
 }
