@@ -41,8 +41,10 @@ type colorOpt bool
 func (colorOpt) isWriteOpt() {}
 
 const (
+	ansiBold    = "\u001b[1m"
 	ansiFgRed   = "\u001b[31m"
 	ansiFgGreen = "\u001b[32m"
+	ansiFgBlue  = "\u001b[36m"
 	ansiReset   = "\u001b[0m"
 )
 
@@ -60,7 +62,6 @@ func (e EditScript) WriteUnified(w io.Writer, ab WriterTo, opts ...WriteOpt) (in
 			nameA = opt.a
 			nameB = opt.b
 		case colorOpt:
-			// TODO: color "---" and "@@" lines too?
 			color = true
 		// TODO: add date/time/timezone WriteOpts
 		default:
@@ -72,11 +73,15 @@ func (e EditScript) WriteUnified(w io.Writer, ab WriterTo, opts ...WriteOpt) (in
 	// TODO: Wrap w in a bufio.Writer? And then use w.WriteByte below instead of w.Write.
 	// Maybe bufio.Writer is enough and we should entirely ditch newErrWriter.
 
+	needsColorReset := false
+
 	// per-file header
+	if color {
+		ew.WriteString(ansiBold)
+		needsColorReset = true
+	}
 	fmt.Fprintf(ew, "--- %s\n", nameA)
 	fmt.Fprintf(ew, "+++ %s\n", nameB)
-
-	needsColorReset := false
 
 	for i := 0; i < len(e.segs); {
 		// Peek into the future to learn the line ranges for this chunk of output.
@@ -117,6 +122,13 @@ func (e EditScript) WriteUnified(w io.Writer, ab WriterTo, opts ...WriteOpt) (in
 		// But how do we get this? need to add PairWriter methods?
 		// Maybe it should be stored in the EditScript,
 		// and we can have EditScript methods to populate it somehow?
+		if color {
+			if needsColorReset {
+				ew.WriteString(ansiReset)
+			}
+			ew.WriteString(ansiFgBlue)
+			needsColorReset = true
+		}
 		fmt.Fprintf(ew, "@@ -%s +%s @@\n", ar, br)
 
 		// Print prefixed lines.

@@ -59,10 +59,10 @@ var goldenTests = []struct {
 		b:    "1\n3\n3",
 		opts: []diff.WriteOpt{diff.TerminalColor()},
 		want: `
---- a
+`[1:] + "\u001b[1m" + `--- a
 +++ b
-@@ -1,3 +1,3 @@
- 1
+` + "\u001b[0m" + "\u001b[36m" + `@@ -1,3 +1,3 @@
+` + "\u001b[0m" + `] 1
 `[1:] + "\u001b[31m" + `-2
 -2
 ` + "\u001b[32m" + `+3
