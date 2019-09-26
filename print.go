@@ -83,35 +83,33 @@ func (e EditScript) WriteUnified(w io.Writer, ab WriterTo, opts ...WriteOpt) (in
 	fmt.Fprintf(ew, "--- %s\n", nameA)
 	fmt.Fprintf(ew, "+++ %s\n", nameB)
 
-	for i := 0; i < len(e.segs); {
+	for i := 0; i < len(e.IndexRanges); {
 		// Peek into the future to learn the line ranges for this chunk of output.
 		// A chunk of output ends when there's a discontiguity in the edit script.
 		var ar, br lineRange
 		var started [2]bool
 		var j int
-		for j = i; j < len(e.segs); j++ {
-			curr := e.segs[j]
-			switch curr.op() {
-			case del, eq:
+		for j = i; j < len(e.IndexRanges); j++ {
+			curr := e.IndexRanges[j]
+			if !curr.IsInsert() {
 				if !started[0] {
-					ar.first = curr.FromA
+					ar.first = curr.LowA
 					started[0] = true
 				}
-				ar.last = curr.ToA
+				ar.last = curr.HighA
 			}
-			switch curr.op() {
-			case ins, eq:
+			if !curr.IsDelete() {
 				if !started[1] {
-					br.first = curr.FromB
+					br.first = curr.LowB
 					started[1] = true
 				}
-				br.last = curr.ToB
+				br.last = curr.HighB
 			}
-			if j+1 >= len(e.segs) {
+			if j+1 >= len(e.IndexRanges) {
 				// end of script
 				break
 			}
-			if next := e.segs[j+1]; curr.ToA != next.FromA || curr.ToB != next.FromB {
+			if next := e.IndexRanges[j+1]; curr.HighA != next.LowA || curr.HighB != next.LowB {
 				// discontiguous edit script
 				break
 			}
@@ -133,13 +131,13 @@ func (e EditScript) WriteUnified(w io.Writer, ab WriterTo, opts ...WriteOpt) (in
 
 		// Print prefixed lines.
 		for k := i; k <= j; k++ {
-			seg := e.segs[k]
+			seg := e.IndexRanges[k]
 			switch seg.op() {
 			case eq:
 				if needsColorReset {
 					ew.WriteString(ansiReset)
 				}
-				for m := seg.FromA; m < seg.ToA; m++ {
+				for m := seg.LowA; m < seg.HighA; m++ {
 					// " a[m]\n"
 					ew.WriteByte(' ')
 					ab.WriteATo(ew, m)
@@ -150,7 +148,7 @@ func (e EditScript) WriteUnified(w io.Writer, ab WriterTo, opts ...WriteOpt) (in
 					ew.WriteString(ansiFgRed)
 					needsColorReset = true
 				}
-				for m := seg.FromA; m < seg.ToA; m++ {
+				for m := seg.LowA; m < seg.HighA; m++ {
 					// "-a[m]\n"
 					ew.WriteByte('-')
 					ab.WriteATo(ew, m)
@@ -161,7 +159,7 @@ func (e EditScript) WriteUnified(w io.Writer, ab WriterTo, opts ...WriteOpt) (in
 					ew.WriteString(ansiFgGreen)
 					needsColorReset = true
 				}
-				for m := seg.FromB; m < seg.ToB; m++ {
+				for m := seg.LowB; m < seg.HighB; m++ {
 					// "+b[m]\n"
 					ew.WriteByte('+')
 					ab.WriteBTo(ew, m)

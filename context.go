@@ -12,79 +12,79 @@ func (e EditScript) WithContextSize(n int) EditScript {
 	}
 
 	// Handle small scripts.
-	switch len(e.segs) {
+	switch len(e.IndexRanges) {
 	case 0:
 		return EditScript{}
 	case 1:
-		if e.segs[0].op() == eq {
+		if e.IndexRanges[0].IsEqual() {
 			// Entirely identical contents.
 			// Unclear what to do here. For now, just bail.
 			// TODO: something else? what does command line diff do?
 			return EditScript{}
 		}
-		return scriptWithSegments(e.segs[0])
+		return scriptWithIndexRanges(e.IndexRanges[0])
 	}
 
-	out := make([]segment, 0, len(e.segs))
-	for i, seg := range e.segs {
-		if seg.op() != eq {
+	out := make([]IndexRanges, 0, len(e.IndexRanges))
+	for i, seg := range e.IndexRanges {
+		if !seg.IsEqual() {
 			out = append(out, seg)
 			continue
 		}
 		if i == 0 {
-			// Leading segment. Keep only the final n entries.
-			if seg.Len() > n {
-				seg = segmentLastN(seg, n)
+			// Leading IndexRanges. Keep only the final n entries.
+			if seg.len() > n {
+				seg = indexRangesLastN(seg, n)
 			}
 			out = append(out, seg)
 			continue
 		}
-		if i == len(e.segs)-1 {
-			// Trailing segment. Keep only the first n entries.
-			if seg.Len() > n {
-				seg = segmentFirstN(seg, n)
+		if i == len(e.IndexRanges)-1 {
+			// Trailing IndexRanges. Keep only the first n entries.
+			if seg.len() > n {
+				seg = indexRangesFirstN(seg, n)
 			}
 			out = append(out, seg)
 			continue
 		}
-		if seg.Len() <= n*2 {
-			// Small middle segment. Keep unchanged.
+		if seg.len() <= n*2 {
+			// Small middle IndexRanges. Keep unchanged.
 			out = append(out, seg)
 			continue
 		}
-		// Large middle segment. Break into two disjoint parts.
-		out = append(out, segmentFirstN(seg, n), segmentLastN(seg, n))
+		// Large middle IndexRanges. Break into two disjoint parts.
+		out = append(out, indexRangesFirstN(seg, n), indexRangesLastN(seg, n))
 	}
 
 	// TODO: Stock macOS diff also trims common blank lines
-	// from the beginning/end of eq segments.
+	// from the beginning/end of eq IndexRangess.
 	// Perhaps we should do that here too.
 	// Or perhaps that should be a separate, composable EditScript method?
-	return EditScript{segs: out}
+	return EditScript{IndexRanges: out}
 }
 
-func segmentFirstN(seg segment, n int) segment {
-	if seg.op() != eq {
-		panic("segmentFirstN bad op")
+func indexRangesFirstN(seg IndexRanges, n int) IndexRanges {
+	if !seg.IsEqual() {
+		panic("indexRangesFirstN bad op")
 	}
-	if seg.Len() < n {
-		panic("segmentFirstN bad Len")
+	if seg.len() < n {
+		panic("indexRangesFirstN bad Len")
 	}
-	return segment{
-		FromA: seg.FromA, ToA: seg.FromA + n,
-		FromB: seg.FromB, ToB: seg.FromB + n,
+	return IndexRanges{
+		LowA: seg.LowA, HighA: seg.LowA + n,
+		LowB: seg.LowB, HighB: seg.LowB + n,
 	}
 }
 
-func segmentLastN(seg segment, n int) segment {
-	if seg.op() != eq {
-		panic("segmentLastN bad op")
+func indexRangesLastN(seg IndexRanges, n int) IndexRanges {
+	if !seg.IsEqual() {
+		panic("indexRangesLastN bad op")
 	}
-	if seg.Len() < n {
-		panic("segmentLastN bad Len")
+	if seg.len() < n {
+		panic("indexRangesLastN bad Len")
 	}
-	return segment{
-		FromA: seg.ToA - n, ToA: seg.ToA,
-		FromB: seg.ToB - n, ToB: seg.ToB,
+	return IndexRanges{
+		LowA: seg.HighA - n, HighA: seg.HighA,
+		LowB: seg.HighB - n, HighB: seg.HighB,
 	}
 }

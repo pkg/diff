@@ -8,32 +8,38 @@ import (
 
 func TestMyers(t *testing.T) {
 	tests := []struct {
-		name string
-		a, b string
-		want []segment
+		name        string
+		a, b        string
+		want        []IndexRanges
+		wantStatIns int
+		wantStatDel int
 	}{
 		{
 			name: "BasicExample",
 			a:    "ABCABBA",
 			b:    "CBABAC",
-			want: []segment{
-				{FromA: 0, ToA: 2, FromB: 0, ToB: 0},
-				{FromA: 2, ToA: 3, FromB: 0, ToB: 1},
-				{FromA: 3, ToA: 3, FromB: 1, ToB: 2},
-				{FromA: 3, ToA: 5, FromB: 2, ToB: 4},
-				{FromA: 5, ToA: 6, FromB: 4, ToB: 4},
-				{FromA: 6, ToA: 7, FromB: 4, ToB: 5},
-				{FromA: 7, ToA: 7, FromB: 5, ToB: 6},
+			want: []IndexRanges{
+				{LowA: 0, HighA: 2, LowB: 0, HighB: 0},
+				{LowA: 2, HighA: 3, LowB: 0, HighB: 1},
+				{LowA: 3, HighA: 3, LowB: 1, HighB: 2},
+				{LowA: 3, HighA: 5, LowB: 2, HighB: 4},
+				{LowA: 5, HighA: 6, LowB: 4, HighB: 4},
+				{LowA: 6, HighA: 7, LowB: 4, HighB: 5},
+				{LowA: 7, HighA: 7, LowB: 5, HighB: 6},
 			},
+			wantStatIns: 2,
+			wantStatDel: 3,
 		},
 		{
 			name: "AllDifferent",
 			a:    "ABCDE",
 			b:    "xyz",
-			want: []segment{
-				{FromA: 0, ToA: 5, FromB: 0, ToB: 0},
-				{FromA: 0, ToA: 0, FromB: 0, ToB: 3},
+			want: []IndexRanges{
+				{LowA: 0, HighA: 5, LowB: 0, HighB: 0},
+				{LowA: 0, HighA: 0, LowB: 0, HighB: 3},
 			},
+			wantStatIns: 3,
+			wantStatDel: 5,
 		},
 		// TODO: add more tests
 	}
@@ -42,12 +48,19 @@ func TestMyers(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			ab := &diffByByte{a: test.a, b: test.b}
 			got := Myers(context.Background(), ab)
-			want := EditScript{segs: test.want}
+			want := EditScript{IndexRanges: test.want}
 
 			if !reflect.DeepEqual(got, want) {
 				// Ironically, it'd be nice to provide a diff between got and want here...
 				// but our diff algorithm is busted.
 				t.Errorf("got:\n%v\n\nwant:\n%v\n\n", got, want)
+			}
+			ins, del := got.Stat()
+			if ins != test.wantStatIns {
+				t.Errorf("got %d insertions, want %d", ins, test.wantStatIns)
+			}
+			if del != test.wantStatDel {
+				t.Errorf("got %d deletions, want %d", del, test.wantStatDel)
 			}
 		})
 	}
