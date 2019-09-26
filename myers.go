@@ -11,10 +11,10 @@ func Myers(ctx context.Context, ab Pair) EditScript {
 	aLen := ab.LenA()
 	bLen := ab.LenB()
 	if aLen == 0 {
-		return scriptWithSegments(segment{ToB: bLen})
+		return scriptWithIndexRanges(IndexRanges{HighB: bLen})
 	}
 	if bLen == 0 {
-		return scriptWithSegments(segment{ToA: aLen})
+		return scriptWithIndexRanges(IndexRanges{HighA: aLen})
 	}
 
 	max := aLen + bLen
@@ -61,7 +61,7 @@ search:
 	if len(trace) == max {
 		// No commonality at all, delete everything and then insert everything.
 		// This is handled as a special case to avoid complicating the logic below.
-		return scriptWithSegments(segment{ToA: aLen}, segment{ToB: bLen})
+		return scriptWithIndexRanges(IndexRanges{HighA: aLen}, IndexRanges{HighB: bLen})
 	}
 
 	// Create reversed edit script.
@@ -80,12 +80,12 @@ search:
 		prevx := v[max+prevk]
 		prevy := prevx - prevk
 		for x > prevx && y > prevy {
-			e.appendToReversed(segment{FromA: x - 1, FromB: y - 1, ToA: x, ToB: y})
+			e.appendToReversed(IndexRanges{LowA: x - 1, LowB: y - 1, HighA: x, HighB: y})
 			x--
 			y--
 		}
 		if d > 0 {
-			e.appendToReversed(segment{FromA: prevx, FromB: prevy, ToA: x, ToB: y})
+			e.appendToReversed(IndexRanges{LowA: prevx, LowB: prevy, HighA: x, HighB: y})
 		}
 		x, y = prevx, prevy
 	}
@@ -94,9 +94,9 @@ search:
 	e.reverse()
 
 	// Sanity check
-	for i := 1; i < len(e.segs); i++ {
-		prevop := e.segs[i-1].op()
-		currop := e.segs[i].op()
+	for i := 1; i < len(e.IndexRanges); i++ {
+		prevop := e.IndexRanges[i-1].op()
+		currop := e.IndexRanges[i].op()
 		if (prevop == currop) || (prevop == ins && currop != eq) || (currop == del && prevop != eq) {
 			panic(fmt.Errorf("bad script: %v -> %v", prevop, currop))
 		}
@@ -106,46 +106,46 @@ search:
 }
 
 func (e EditScript) reverse() {
-	for i := 0; i < len(e.segs)/2; i++ {
-		j := len(e.segs) - i - 1
-		e.segs[i], e.segs[j] = e.segs[j], e.segs[i]
+	for i := 0; i < len(e.IndexRanges)/2; i++ {
+		j := len(e.IndexRanges) - i - 1
+		e.IndexRanges[i], e.IndexRanges[j] = e.IndexRanges[j], e.IndexRanges[i]
 	}
 }
 
-func (e *EditScript) appendToReversed(seg segment) {
-	if len(e.segs) == 0 {
-		e.segs = append(e.segs, seg)
+func (e *EditScript) appendToReversed(seg IndexRanges) {
+	if len(e.IndexRanges) == 0 {
+		e.IndexRanges = append(e.IndexRanges, seg)
 		return
 	}
-	u, ok := combineSegments(seg, e.segs[len(e.segs)-1])
+	u, ok := combineIndexRangess(seg, e.IndexRanges[len(e.IndexRanges)-1])
 	if !ok {
-		e.segs = append(e.segs, seg)
+		e.IndexRanges = append(e.IndexRanges, seg)
 		return
 	}
-	e.segs[len(e.segs)-1] = u
+	e.IndexRanges[len(e.IndexRanges)-1] = u
 	return
 }
 
-// combineSegments combines s and t into a single segment if possible
+// combineIndexRangess combines s and t into a single IndexRanges if possible
 // and reports whether it succeeded.
-func combineSegments(s, t segment) (u segment, ok bool) {
-	if t.Len() == 0 {
+func combineIndexRangess(s, t IndexRanges) (u IndexRanges, ok bool) {
+	if t.len() == 0 {
 		return s, true
 	}
-	if s.Len() == 0 {
+	if s.len() == 0 {
 		return t, true
 	}
 	if s.op() != t.op() {
-		return segment{FromA: -1, ToA: -1, FromB: -1, ToB: -1}, false
+		return IndexRanges{LowA: -1, HighA: -1, LowB: -1, HighB: -1}, false
 	}
 	switch s.op() {
 	case ins:
-		s.ToB = t.ToB
+		s.HighB = t.HighB
 	case del:
-		s.ToA = t.ToA
+		s.HighA = t.HighA
 	case eq:
-		s.ToA = t.ToA
-		s.ToB = t.ToB
+		s.HighA = t.HighA
+		s.HighB = t.HighB
 	default:
 		panic("bad op")
 	}

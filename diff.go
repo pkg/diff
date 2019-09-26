@@ -59,45 +59,67 @@ const (
 	ins op = 1
 )
 
-// A segment is a set of steps of the same op.
-type segment struct {
-	FromA, ToA int // Beginning and ending indices into A of this operation
-	FromB, ToB int // ditto, for B
+// IndexRanges represents a pair of clopen index ranges.
+// They represent elements A[LowA:HighA] and B[LowB:HighB].
+type IndexRanges struct {
+	LowA, HighA int
+	LowB, HighB int
 }
 
-func (s segment) op() op {
-	if s.FromA == s.ToA {
+// IsInsert reports whether r represents an insertion in an EditScript.
+// If so, the inserted elements are B[LowB:HighB].
+func (r *IndexRanges) IsInsert() bool {
+	return r.LowA == r.HighA
+}
+
+// IsDelete reports whether r represents a deletion in an EditScript.
+// If so, the deleted elements are A[LowA:HighA].
+func (r *IndexRanges) IsDelete() bool {
+	return r.LowB == r.HighB
+}
+
+// IsEqual reports whether r represents a series of equal elements in an EditScript.
+// If so, the elements A[LowA:HighA] are equal to the elements B[LowB:HighB].
+func (r *IndexRanges) IsEqual() bool {
+	return r.HighB-r.LowB == r.HighA-r.LowA
+}
+
+func (r *IndexRanges) op() op {
+	if r.IsInsert() {
 		return ins
 	}
-	if s.FromB == s.ToB {
+	if r.IsDelete() {
 		return del
 	}
-	return eq
-}
-
-func (s segment) String() string {
-	// This output is helpful when hacking on a Myers diff.
-	// In other contexts it is usually more natural to group FromA, ToA and FromB, ToB.
-	return fmt.Sprintf("(%d, %d) -- %s %d --> (%d, %d)", s.FromA, s.FromB, s.op(), s.Len(), s.ToA, s.ToB)
-}
-
-func (s segment) Len() int {
-	if s.FromA == s.ToA {
-		return s.ToB - s.FromB
+	if r.IsEqual() {
+		return eq
 	}
-	return s.ToA - s.FromA
+	panic("malformed IndexRanges")
+}
+
+func (s IndexRanges) debugString() string {
+	// This output is helpful when hacking on a Myers diff.
+	// In other contexts it is usually more natural to group LowA, HighA and LowB, HighB.
+	return fmt.Sprintf("(%d, %d) -- %s %d --> (%d, %d)", s.LowA, s.LowB, s.op(), s.len(), s.HighA, s.HighB)
+}
+
+func (s IndexRanges) len() int {
+	if s.LowA == s.HighA {
+		return s.HighB - s.LowB
+	}
+	return s.HighA - s.LowA
 }
 
 // An EditScript is an edit script to alter A into B.
 type EditScript struct {
-	segs []segment
+	IndexRanges []IndexRanges
 }
 
 // IsIdentity reports whether e is the identity edit script, that is, whether A and B are identical.
 // See the TestHelper example.
 func (e EditScript) IsIdentity() bool {
-	for _, seg := range e.segs {
-		if seg.op() != eq {
+	for _, seg := range e.IndexRanges {
+		if !seg.IsEqual() {
 			return false
 		}
 	}
@@ -108,16 +130,16 @@ func (e EditScript) IsIdentity() bool {
 // diffs them using Strings or Bytes or Slices (using reflect.DeepEqual) as appropriate,
 // and calls t.Errorf with a generated diff if they're not equal.
 
-// scriptWithSegments returns an EditScript containing s.
+// scriptWithIndexRanges returns an EditScript containing s.
 // It is used to reduce line noise.
-func scriptWithSegments(s ...segment) EditScript {
-	return EditScript{segs: s}
+func scriptWithIndexRanges(s ...IndexRanges) EditScript {
+	return EditScript{IndexRanges: s}
 }
 
 // dump formats s for debugging.
 func (e EditScript) dump() string {
 	buf := new(bytes.Buffer)
-	for _, seg := range e.segs {
+	for _, seg := range e.IndexRanges {
 		fmt.Fprintln(buf, seg)
 	}
 	return buf.String()
