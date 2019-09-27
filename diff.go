@@ -126,6 +126,19 @@ func (e EditScript) IsIdentity() bool {
 	return true
 }
 
+// Stat reports the number of insertions and deletions in e.
+func (e EditScript) Stat() (ins, del int) {
+	for _, r := range e.IndexRanges {
+		switch {
+		case r.IsDelete():
+			del += r.HighA - r.LowA
+		case r.IsInsert():
+			ins += r.HighB - r.LowB
+		}
+	}
+	return ins, del
+}
+
 // TODO: consider adding an "it just works" test helper that accepts two slices (via interface{}),
 // diffs them using Strings or Bytes or Slices (using reflect.DeepEqual) as appropriate,
 // and calls t.Errorf with a generated diff if they're not equal.
