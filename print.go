@@ -48,6 +48,22 @@ const (
 	ansiReset   = "\u001b[0m"
 )
 
+func LineNumbers() WriteOpt {
+	return lineOpt(true)
+}
+
+type lineOpt bool
+
+func (lineOpt) isWriteOpt() {}
+
+func NoHeaders() WriteOpt {
+	return headersOpt(true)
+}
+
+type headersOpt bool
+
+func (headersOpt) isWriteOpt() {}
+
 // WriteUnified writes e to w using unified diff format.
 // ab writes the individual elements. Opts are optional write arguments.
 // WriteUnified returns the number of bytes written and the first error (if any) encountered.
@@ -56,6 +72,8 @@ func (e EditScript) WriteUnified(w io.Writer, ab WriterTo, opts ...WriteOpt) (in
 	nameA := "a"
 	nameB := "b"
 	color := false
+	lineNumbers := false
+	headers := true
 	for _, opt := range opts {
 		switch opt := opt.(type) {
 		case names:
@@ -63,6 +81,10 @@ func (e EditScript) WriteUnified(w io.Writer, ab WriterTo, opts ...WriteOpt) (in
 			nameB = opt.b
 		case colorOpt:
 			color = true
+		case lineOpt:
+			lineNumbers = true
+		case headersOpt:
+			headers = false
 		// TODO: add date/time/timezone WriteOpts
 		default:
 			panic(fmt.Sprintf("unrecognized WriteOpt type %T", opt))
@@ -80,8 +102,10 @@ func (e EditScript) WriteUnified(w io.Writer, ab WriterTo, opts ...WriteOpt) (in
 		ew.WriteString(ansiBold)
 		needsColorReset = true
 	}
-	fmt.Fprintf(ew, "--- %s\n", nameA)
-	fmt.Fprintf(ew, "+++ %s\n", nameB)
+	if headers {
+		fmt.Fprintf(ew, "--- %s\n", nameA)
+		fmt.Fprintf(ew, "+++ %s\n", nameB)
+	}
 
 	for i := 0; i < len(e.IndexRanges); {
 		// Peek into the future to learn the line ranges for this chunk of output.
@@ -127,7 +151,9 @@ func (e EditScript) WriteUnified(w io.Writer, ab WriterTo, opts ...WriteOpt) (in
 			ew.WriteString(ansiFgBlue)
 			needsColorReset = true
 		}
-		fmt.Fprintf(ew, "@@ -%s +%s @@\n", ar, br)
+		if headers {
+			fmt.Fprintf(ew, "@@ -%s +%s @@\n", ar, br)
+		}
 
 		// Print prefixed lines.
 		for k := i; k <= j; k++ {
@@ -139,6 +165,9 @@ func (e EditScript) WriteUnified(w io.Writer, ab WriterTo, opts ...WriteOpt) (in
 				}
 				for m := seg.LowA; m < seg.HighA; m++ {
 					// " a[m]\n"
+					if lineNumbers {
+						fmt.Fprintf(ew, "%d/%d ", m, seg.LowB+m-seg.LowA)
+					}
 					ew.WriteByte(' ')
 					ab.WriteATo(ew, m)
 					ew.WriteByte('\n')
@@ -150,6 +179,9 @@ func (e EditScript) WriteUnified(w io.Writer, ab WriterTo, opts ...WriteOpt) (in
 				}
 				for m := seg.LowA; m < seg.HighA; m++ {
 					// "-a[m]\n"
+					if lineNumbers {
+						fmt.Fprintf(ew, "%d/· ", m)
+					}
 					ew.WriteByte('-')
 					ab.WriteATo(ew, m)
 					ew.WriteByte('\n')
@@ -161,6 +193,9 @@ func (e EditScript) WriteUnified(w io.Writer, ab WriterTo, opts ...WriteOpt) (in
 				}
 				for m := seg.LowB; m < seg.HighB; m++ {
 					// "+b[m]\n"
+					if lineNumbers {
+						fmt.Fprintf(ew, "·/%d ", m)
+					}
 					ew.WriteByte('+')
 					ab.WriteBTo(ew, m)
 					ew.WriteByte('\n')
