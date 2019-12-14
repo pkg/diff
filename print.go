@@ -165,11 +165,11 @@ func (e EditScript) WriteUnified(w io.Writer, ab WriterTo, opts ...WriteOpt) (in
 				}
 				for m := seg.LowA; m < seg.HighA; m++ {
 					// " a[m]\n"
-					if lineNumbers {
-						fmt.Fprintf(ew, "%d/%d ", m, seg.LowB+m-seg.LowA)
-					}
 					ew.WriteByte(' ')
 					ab.WriteATo(ew, m)
+					if lineNumbers {
+						fmt.Fprintf(ew, " (%d/%d)", m, seg.LowB+m-seg.LowA)
+					}
 					ew.WriteByte('\n')
 				}
 			case del:
@@ -179,11 +179,11 @@ func (e EditScript) WriteUnified(w io.Writer, ab WriterTo, opts ...WriteOpt) (in
 				}
 				for m := seg.LowA; m < seg.HighA; m++ {
 					// "-a[m]\n"
-					if lineNumbers {
-						fmt.Fprintf(ew, "%d/· ", m)
-					}
 					ew.WriteByte('-')
 					ab.WriteATo(ew, m)
+					if lineNumbers {
+						fmt.Fprintf(ew, " (%d/·)", m)
+					}
 					ew.WriteByte('\n')
 				}
 			case ins:
@@ -193,11 +193,11 @@ func (e EditScript) WriteUnified(w io.Writer, ab WriterTo, opts ...WriteOpt) (in
 				}
 				for m := seg.LowB; m < seg.HighB; m++ {
 					// "+b[m]\n"
-					if lineNumbers {
-						fmt.Fprintf(ew, "·/%d ", m)
-					}
 					ew.WriteByte('+')
 					ab.WriteBTo(ew, m)
+					if lineNumbers {
+						fmt.Fprintf(ew, " (·/%d)", m)
+					}
 					ew.WriteByte('\n')
 				}
 			}
