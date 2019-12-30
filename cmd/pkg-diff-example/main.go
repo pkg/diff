@@ -11,6 +11,7 @@ import (
 	"os"
 
 	"github.com/pkg/diff"
+	"github.com/pkg/diff/myers"
 )
 
 var (
@@ -73,7 +74,7 @@ func main() {
 		ctx, cancel = context.WithTimeout(ctx, *timeout)
 		defer cancel()
 	}
-	e := diff.Myers(ctx, ab)
+	e := myers.Diff(ctx, ab)
 	e = diff.EditScriptWithContextSize(e, *unified) // limit amount of output context
 	opts := []diff.WriteOpt{
 		diff.Names(aName, bName),

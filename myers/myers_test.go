@@ -1,4 +1,4 @@
-package diff
+package myers_test
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/pkg/diff/edit"
+	"github.com/pkg/diff/myers"
 )
 
 func TestMyers(t *testing.T) {
@@ -49,7 +50,7 @@ func TestMyers(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			ab := &diffByByte{a: test.a, b: test.b}
-			got := Myers(context.Background(), ab)
+			got := myers.Diff(context.Background(), ab)
 			want := edit.Script{Ranges: test.want}
 
 			if !reflect.DeepEqual(got, want) {

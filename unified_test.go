@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/pkg/diff"
+	"github.com/pkg/diff/myers"
 	"github.com/sergi/go-diff/diffmatchpatch"
 )
 
@@ -80,7 +81,7 @@ func TestGolden(t *testing.T) {
 			// TODO: supply an edit.Script to the tests instead doing a Myers diff here.
 			// Doing it as I have done, the lazy way, mixes concerns: diff algorithm vs unification algorithm
 			// vs unified diff formatting.
-			e := diff.Myers(context.Background(), ab)
+			e := myers.Diff(context.Background(), ab)
 			e = diff.EditScriptWithContextSize(e, 3)
 			buf := new(bytes.Buffer)
 			diff.WriteUnified(e, buf, ab, test.opts...)

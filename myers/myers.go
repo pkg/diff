@@ -1,4 +1,5 @@
-package diff
+// Package myers implements the Myers diff algorithm.
+package myers
 
 import (
 	"context"
@@ -7,9 +8,20 @@ import (
 	"github.com/pkg/diff/edit"
 )
 
-// Myers calculates an edit.Script (diff) for ab using the Myers diff algorithm.
+// A Pair is two things that can be diffed using the Myers diff algorithm.
+// A is the initial state; B is the final state.
+type Pair interface {
+	// LenA returns the number of initial elements.
+	LenA() int
+	// LenB returns the number of final elements.
+	LenB() int
+	// Equal reports whether the aᵢ'th element of A is equal to the bᵢ'th element of B.
+	Equal(ai, bi int) bool
+}
+
+// Diff calculates an edit.Script for ab using the Myers diff algorithm.
 // Because diff calculation can be expensive, Myers supports cancellation via ctx.
-func Myers(ctx context.Context, ab Pair) edit.Script {
+func Diff(ctx context.Context, ab Pair) edit.Script {
 	aLen := ab.LenA()
 	bLen := ab.LenB()
 	if aLen == 0 {
@@ -152,4 +164,10 @@ func combineRanges(s, t edit.Range) (u edit.Range, ok bool) {
 		panic("bad op")
 	}
 	return s, true
+}
+
+func rangeString(r edit.Range) string {
+	// This output is helpful when hacking on a Myers diff.
+	// In other contexts it is usually more natural to group LowA, HighA and LowB, HighB.
+	return fmt.Sprintf("(%d, %d) -- %s %d --> (%d, %d)", r.LowA, r.LowB, r.Op(), r.Len(), r.HighA, r.HighB)
 }
