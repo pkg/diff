@@ -7,6 +7,7 @@ import (
 	"github.com/pkg/diff"
 	"github.com/pkg/diff/ctxt"
 	"github.com/pkg/diff/myers"
+	"github.com/pkg/diff/write"
 )
 
 // TODO: use a less heavyweight output format for Example_testHelper
@@ -20,7 +21,7 @@ func Example_testHelper() {
 		return
 	}
 	e = ctxt.Size(e, 1)
-	diff.WriteUnified(e, os.Stdout, ab)
+	write.Unified(e, os.Stdout, ab)
 	// Output:
 	// --- a
 	// +++ b
@@ -35,7 +36,7 @@ func Example_strings() {
 	b := []string{"a", "c", "d"}
 	ab := diff.Strings(a, b)
 	e := myers.Diff(context.Background(), ab)
-	diff.WriteUnified(e, os.Stdout, ab)
+	write.Unified(e, os.Stdout, ab)
 	// Output:
 	// --- a
 	// +++ b
@@ -51,7 +52,7 @@ func Example_Names() {
 	b := []string{"a", "c", "d"}
 	ab := diff.Strings(a, b)
 	e := myers.Diff(context.Background(), ab)
-	diff.WriteUnified(e, os.Stdout, ab, diff.Names("before", "after"))
+	write.Unified(e, os.Stdout, ab, write.Names("before", "after"))
 	// Output:
 	// --- before
 	// +++ after

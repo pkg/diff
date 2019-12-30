@@ -1,4 +1,4 @@
-package diff_test
+package write_test
 
 import (
 	"bytes"
@@ -9,13 +9,14 @@ import (
 	"github.com/pkg/diff"
 	"github.com/pkg/diff/ctxt"
 	"github.com/pkg/diff/myers"
+	"github.com/pkg/diff/write"
 	"github.com/sergi/go-diff/diffmatchpatch"
 )
 
 var goldenTests = []struct {
 	name string
 	a, b string
-	opts []diff.WriteOpt
+	opts []write.Option
 	want string // usually from running diff --unified and cleaning up the output
 }{
 	{
@@ -59,7 +60,7 @@ var goldenTests = []struct {
 		name: "WithTerminalColor",
 		a:    "1\n2\n2",
 		b:    "1\n3\n3",
-		opts: []diff.WriteOpt{diff.TerminalColor()},
+		opts: []write.Option{write.TerminalColor()},
 		want: `
 `[1:] + "\u001b[1m" + `--- a
 +++ b
@@ -85,7 +86,7 @@ func TestGolden(t *testing.T) {
 			e := myers.Diff(context.Background(), ab)
 			e = ctxt.Size(e, 3)
 			buf := new(bytes.Buffer)
-			diff.WriteUnified(e, buf, ab, test.opts...)
+			write.Unified(e, buf, ab, test.opts...)
 			got := buf.String()
 			if test.want != got {
 				t.Logf("%q\n", test.want)

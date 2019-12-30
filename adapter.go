@@ -5,10 +5,20 @@ import (
 	"fmt"
 	"io"
 	"reflect"
+
+	"github.com/pkg/diff/myers"
+	"github.com/pkg/diff/write"
 )
 
-// Strings returns a PairWriterTo that can diff and write a and b.
-func Strings(a, b []string) PairWriterTo {
+// DiffWrite is the union of myers.Pair and write.Pair:
+// It can be diffed using myers diff, and written in unified diff format.
+type DiffWrite interface {
+	myers.Pair
+	write.Pair
+}
+
+// Strings returns a DiffWrite that can diff and write a and b.
+func Strings(a, b []string) DiffWrite {
 	return &diffStrings{a: a, b: b}
 }
 
@@ -22,8 +32,8 @@ func (ab *diffStrings) Equal(ai, bi int) bool                    { return ab.a[a
 func (ab *diffStrings) WriteATo(w io.Writer, i int) (int, error) { return io.WriteString(w, ab.a[i]) }
 func (ab *diffStrings) WriteBTo(w io.Writer, i int) (int, error) { return io.WriteString(w, ab.b[i]) }
 
-// Bytes returns a PairWriterTo that can diff and write a and b.
-func Bytes(a, b [][]byte) PairWriterTo {
+// Bytes returns a DiffWrite that can diff and write a and b.
+func Bytes(a, b [][]byte) DiffWrite {
 	return &diffBytes{a: a, b: b}
 }
 
@@ -37,11 +47,11 @@ func (ab *diffBytes) Equal(ai, bi int) bool                    { return bytes.Eq
 func (ab *diffBytes) WriteATo(w io.Writer, i int) (int, error) { return w.Write(ab.a[i]) }
 func (ab *diffBytes) WriteBTo(w io.Writer, i int) (int, error) { return w.Write(ab.b[i]) }
 
-// Slices returns a PairWriterTo that diffs a and b.
+// Slices returns a DiffWrite that diffs a and b.
 // It uses fmt.Print to print the elements of a and b.
 // It uses equal to compare elements of a and b;
 // if equal is nil, Slices uses reflect.DeepEqual.
-func Slices(a, b interface{}, equal func(x, y interface{}) bool) PairWriterTo {
+func Slices(a, b interface{}, equal func(x, y interface{}) bool) DiffWrite {
 	if equal == nil {
 		equal = reflect.DeepEqual
 	}

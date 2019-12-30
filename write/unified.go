@@ -1,4 +1,4 @@
-package diff
+package write
 
 import (
 	"fmt"
@@ -7,55 +7,21 @@ import (
 	"github.com/pkg/diff/edit"
 )
 
-// TODO: add diff writing that uses < and > (don't know what that is called)
-// TODO: add side by side diffs
-// TODO: add html diffs (?)
-// TODO: add intraline highlighting?
-// TODO: a way to specify alternative colors, like a ColorScheme write option
-
-// A WriteOpt is used to provide options when writing a diff.
-type WriteOpt interface {
-	isWriteOpt()
+// A Pair type supports writing a unified diff, element by element.
+// A is the initial state; B is the final state.
+type Pair interface {
+	// WriteATo writes the element a[aᵢ] to w.
+	WriteATo(w io.Writer, ai int) (int, error)
+	// WriteBTo writes the element b[bᵢ] to w.
+	WriteBTo(w io.Writer, bi int) (int, error)
 }
 
-// Names provides the before/after names for writing a diff.
-// They are traditionally filenames.
-func Names(a, b string) WriteOpt {
-	return names{a, b}
-}
-
-type names struct {
-	a, b string
-}
-
-func (names) isWriteOpt() {}
-
-// TerminalColor specifies that a diff intended for a terminal should be written
-// using red and green colors.
-//
-// Do not use TerminalColor if TERM=dumb is set in the environment.
-func TerminalColor() WriteOpt {
-	return colorOpt(true)
-}
-
-type colorOpt bool
-
-func (colorOpt) isWriteOpt() {}
-
-const (
-	ansiBold    = "\u001b[1m"
-	ansiFgRed   = "\u001b[31m"
-	ansiFgGreen = "\u001b[32m"
-	ansiFgBlue  = "\u001b[36m"
-	ansiReset   = "\u001b[0m"
-)
-
-// WriteUnified writes e to w using unified diff format.
+// Unified writes e to w using unified diff format.
 // ab writes the individual elements. Opts are optional write arguments.
-// WriteUnified returns the number of bytes written and the first error (if any) encountered.
+// Unified returns the number of bytes written and the first error (if any) encountered.
 // Before writing, edit scripts usually have their context reduced,
 // such as by a call to ctxt.Size.
-func WriteUnified(e edit.Script, w io.Writer, ab WriterTo, opts ...WriteOpt) (int, error) {
+func Unified(e edit.Script, w io.Writer, ab Pair, opts ...Option) (int, error) {
 	// read opts
 	nameA := "a"
 	nameB := "b"
@@ -209,39 +175,3 @@ func (r lineRange) String() string {
 func (r lineRange) GoString() string {
 	return fmt.Sprintf("(%d, %d)", r.first, r.last)
 }
-
-func newErrWriter(w io.Writer) *errwriter {
-	return &errwriter{w: w}
-}
-
-type errwriter struct {
-	w         io.Writer
-	err       error
-	wrote     int
-	attempted int
-}
-
-func (w *errwriter) Write(b []byte) (int, error) {
-	w.attempted += len(b)
-	if w.err != nil {
-		return 0, w.err // TODO: use something like errors.Wrap(w.err)?
-	}
-	n, err := w.w.Write(b)
-	if err != nil {
-		w.err = err
-	}
-	w.wrote += n
-	return n, err
-}
-
-func (w *errwriter) WriteString(s string) {
-	// TODO: use w.w's WriteString method, if it exists
-	w.Write([]byte(s))
-}
-
-func (w *errwriter) WriteByte(b byte) {
-	// TODO: use w.w's WriteByte method, if it exists
-	w.Write([]byte{b})
-}
-
-func (w *errwriter) Error() error { return w.err }

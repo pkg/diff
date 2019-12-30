@@ -13,6 +13,7 @@ import (
 	"github.com/pkg/diff"
 	"github.com/pkg/diff/ctxt"
 	"github.com/pkg/diff/myers"
+	"github.com/pkg/diff/write"
 )
 
 var (
@@ -77,12 +78,12 @@ func main() {
 	}
 	e := myers.Diff(ctx, ab)
 	e = ctxt.Size(e, *unified) // limit amount of output context
-	opts := []diff.WriteOpt{
-		diff.Names(aName, bName),
+	opts := []write.Option{
+		write.Names(aName, bName),
 	}
 	if *color {
-		opts = append(opts, diff.TerminalColor())
+		opts = append(opts, write.TerminalColor())
 	}
-	_, err = diff.WriteUnified(e, os.Stdout, ab, opts...)
+	_, err = write.Unified(e, os.Stdout, ab, opts...)
 	check(err)
 }
