@@ -3,46 +3,22 @@
 package main
 
 import (
-	"bufio"
-	"context"
 	"flag"
 	"fmt"
 	"log"
 	"os"
 
 	"github.com/pkg/diff"
-	"github.com/pkg/diff/ctxt"
-	"github.com/pkg/diff/myers"
 	"github.com/pkg/diff/write"
 )
 
-var (
-	color   = flag.Bool("color", false, "colorize the output")
-	timeout = flag.Duration("timeout", 0, "timeout")
-	unified = flag.Int("unified", 3, "lines of unified context")
-)
+var color = flag.Bool("color", false, "colorize the output")
 
 // check logs a fatal error and exits if err is not nil.
 func check(err error) {
 	if err != nil {
 		log.Fatal(err)
 	}
-}
-
-// fileLines returns the lines of the file called name.
-func fileLines(name string) ([]string, error) {
-	f, err := os.Open(name)
-	if err != nil {
-		return nil, err
-	}
-	defer f.Close()
-
-	var lines []string
-	s := bufio.NewScanner(f)
-	for s.Scan() {
-		lines = append(lines, s.Text())
-	}
-	return lines, s.Err()
 }
 
 func usage() {
@@ -62,28 +38,13 @@ func main() {
 	}
 
 	aName := flag.Arg(0)
-	aLines, err := fileLines(aName)
-	check(err)
-
 	bName := flag.Arg(1)
-	bLines, err := fileLines(bName)
-	check(err)
 
-	ab := diff.Strings(aLines, bLines)
-	ctx := context.Background()
-	if *timeout != 0 {
-		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, *timeout)
-		defer cancel()
-	}
-	e := myers.Diff(ctx, ab)
-	e = ctxt.Size(e, *unified) // limit amount of output context
-	opts := []write.Option{
-		write.Names(aName, bName),
-	}
+	var opts []write.Option
 	if *color {
 		opts = append(opts, write.TerminalColor())
 	}
-	_, err = write.Unified(e, os.Stdout, ab, opts...)
+
+	err := diff.Text(aName, bName, nil, nil, os.Stdout, opts...)
 	check(err)
 }

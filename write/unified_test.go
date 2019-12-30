@@ -3,10 +3,10 @@ package write_test
 import (
 	"bytes"
 	"context"
+	"io"
 	"strings"
 	"testing"
 
-	"github.com/pkg/diff"
 	"github.com/pkg/diff/ctxt"
 	"github.com/pkg/diff/myers"
 	"github.com/pkg/diff/write"
@@ -79,7 +79,7 @@ func TestGolden(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			as := strings.Split(test.a, "\n")
 			bs := strings.Split(test.b, "\n")
-			ab := diff.Strings(as, bs)
+			ab := &diffStrings{a: as, b: bs}
 			// TODO: supply an edit.Script to the tests instead doing a Myers diff here.
 			// Doing it as I have done, the lazy way, mixes concerns: diff algorithm vs unification algorithm
 			// vs unified diff formatting.
@@ -102,3 +102,13 @@ func TestGolden(t *testing.T) {
 		})
 	}
 }
+
+type diffStrings struct {
+	a, b []string
+}
+
+func (ab *diffStrings) LenA() int                                { return len(ab.a) }
+func (ab *diffStrings) LenB() int                                { return len(ab.b) }
+func (ab *diffStrings) Equal(ai, bi int) bool                    { return ab.a[ai] == ab.b[bi] }
+func (ab *diffStrings) WriteATo(w io.Writer, i int) (int, error) { return io.WriteString(w, ab.a[i]) }
+func (ab *diffStrings) WriteBTo(w io.Writer, i int) (int, error) { return io.WriteString(w, ab.b[i]) }
