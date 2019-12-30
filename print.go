@@ -3,6 +3,8 @@ package diff
 import (
 	"fmt"
 	"io"
+
+	"github.com/pkg/diff/edit"
 )
 
 // TODO: add diff writing that uses < and > (don't know what that is called)
@@ -51,7 +53,7 @@ const (
 // WriteUnified writes e to w using unified diff format.
 // ab writes the individual elements. Opts are optional write arguments.
 // WriteUnified returns the number of bytes written and the first error (if any) encountered.
-func (e EditScript) WriteUnified(w io.Writer, ab WriterTo, opts ...WriteOpt) (int, error) {
+func WriteUnified(e edit.Script, w io.Writer, ab WriterTo, opts ...WriteOpt) (int, error) {
 	// read opts
 	nameA := "a"
 	nameB := "b"
@@ -83,14 +85,14 @@ func (e EditScript) WriteUnified(w io.Writer, ab WriterTo, opts ...WriteOpt) (in
 	fmt.Fprintf(ew, "--- %s\n", nameA)
 	fmt.Fprintf(ew, "+++ %s\n", nameB)
 
-	for i := 0; i < len(e.IndexRanges); {
+	for i := 0; i < len(e.Ranges); {
 		// Peek into the future to learn the line ranges for this chunk of output.
 		// A chunk of output ends when there's a discontiguity in the edit script.
 		var ar, br lineRange
 		var started [2]bool
 		var j int
-		for j = i; j < len(e.IndexRanges); j++ {
-			curr := e.IndexRanges[j]
+		for j = i; j < len(e.Ranges); j++ {
+			curr := e.Ranges[j]
 			if !curr.IsInsert() {
 				if !started[0] {
 					ar.first = curr.LowA
@@ -105,11 +107,11 @@ func (e EditScript) WriteUnified(w io.Writer, ab WriterTo, opts ...WriteOpt) (in
 				}
 				br.last = curr.HighB
 			}
-			if j+1 >= len(e.IndexRanges) {
+			if j+1 >= len(e.Ranges) {
 				// end of script
 				break
 			}
-			if next := e.IndexRanges[j+1]; curr.HighA != next.LowA || curr.HighB != next.LowB {
+			if next := e.Ranges[j+1]; curr.HighA != next.LowA || curr.HighB != next.LowB {
 				// discontiguous edit script
 				break
 			}
@@ -131,9 +133,9 @@ func (e EditScript) WriteUnified(w io.Writer, ab WriterTo, opts ...WriteOpt) (in
 
 		// Print prefixed lines.
 		for k := i; k <= j; k++ {
-			seg := e.IndexRanges[k]
-			switch seg.op() {
-			case eq:
+			seg := e.Ranges[k]
+			switch seg.Op() {
+			case edit.Eq:
 				if needsColorReset {
 					ew.WriteString(ansiReset)
 				}
@@ -143,7 +145,7 @@ func (e EditScript) WriteUnified(w io.Writer, ab WriterTo, opts ...WriteOpt) (in
 					ab.WriteATo(ew, m)
 					ew.WriteByte('\n')
 				}
-			case del:
+			case edit.Del:
 				if color {
 					ew.WriteString(ansiFgRed)
 					needsColorReset = true
@@ -154,7 +156,7 @@ func (e EditScript) WriteUnified(w io.Writer, ab WriterTo, opts ...WriteOpt) (in
 					ab.WriteATo(ew, m)
 					ew.WriteByte('\n')
 				}
-			case ins:
+			case edit.Ins:
 				if color {
 					ew.WriteString(ansiFgGreen)
 					needsColorReset = true

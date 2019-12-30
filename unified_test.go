@@ -77,13 +77,13 @@ func TestGolden(t *testing.T) {
 			as := strings.Split(test.a, "\n")
 			bs := strings.Split(test.b, "\n")
 			ab := diff.Strings(as, bs)
-			// TODO: supply an EditScript to the tests instead doing a Myers diff here.
+			// TODO: supply an edit.Script to the tests instead doing a Myers diff here.
 			// Doing it as I have done, the lazy way, mixes concerns: diff algorithm vs unification algorithm
 			// vs unified diff formatting.
 			e := diff.Myers(context.Background(), ab)
-			e = e.WithContextSize(3)
+			e = diff.EditScriptWithContextSize(e, 3)
 			buf := new(bytes.Buffer)
-			e.WriteUnified(buf, ab, test.opts...)
+			diff.WriteUnified(e, buf, ab, test.opts...)
 			got := buf.String()
 			if test.want != got {
 				t.Logf("%q\n", test.want)

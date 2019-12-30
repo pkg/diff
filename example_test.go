@@ -17,8 +17,8 @@ func Example_testHelper() {
 	if e.IsIdentity() {
 		return
 	}
-	e = e.WithContextSize(1)
-	e.WriteUnified(os.Stdout, ab)
+	e = diff.EditScriptWithContextSize(e, 1)
+	diff.WriteUnified(e, os.Stdout, ab)
 	// Output:
 	// --- a
 	// +++ b
@@ -33,7 +33,7 @@ func Example_strings() {
 	b := []string{"a", "c", "d"}
 	ab := diff.Strings(a, b)
 	e := diff.Myers(context.Background(), ab)
-	e.WriteUnified(os.Stdout, ab)
+	diff.WriteUnified(e, os.Stdout, ab)
 	// Output:
 	// --- a
 	// +++ b
@@ -49,7 +49,7 @@ func Example_Names() {
 	b := []string{"a", "c", "d"}
 	ab := diff.Strings(a, b)
 	e := diff.Myers(context.Background(), ab)
-	e.WriteUnified(os.Stdout, ab, diff.Names("before", "after"))
+	diff.WriteUnified(e, os.Stdout, ab, diff.Names("before", "after"))
 	// Output:
 	// --- before
 	// +++ after

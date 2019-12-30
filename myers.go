@@ -3,18 +3,20 @@ package diff
 import (
 	"context"
 	"fmt"
+
+	"github.com/pkg/diff/edit"
 )
 
-// Myers calculates an EditScript (diff) for ab using the Myers diff algorithm.
+// Myers calculates an edit.Script (diff) for ab using the Myers diff algorithm.
 // Because diff calculation can be expensive, Myers supports cancellation via ctx.
-func Myers(ctx context.Context, ab Pair) EditScript {
+func Myers(ctx context.Context, ab Pair) edit.Script {
 	aLen := ab.LenA()
 	bLen := ab.LenB()
 	if aLen == 0 {
-		return scriptWithIndexRanges(IndexRanges{HighB: bLen})
+		return edit.NewScript(edit.Range{HighB: bLen})
 	}
 	if bLen == 0 {
-		return scriptWithIndexRanges(IndexRanges{HighA: aLen})
+		return edit.NewScript(edit.Range{HighA: aLen})
 	}
 
 	max := aLen + bLen
@@ -28,7 +30,7 @@ search:
 	for d := 0; d < max; d++ {
 		// Only check context every 16th iteration to reduce overhead.
 		if ctx != nil && uint(d)%16 == 0 && ctx.Err() != nil {
-			return EditScript{}
+			return edit.Script{}
 		}
 
 		// TODO: this seems like it will frequently be bigger than necessary.
@@ -61,13 +63,13 @@ search:
 	if len(trace) == max {
 		// No commonality at all, delete everything and then insert everything.
 		// This is handled as a special case to avoid complicating the logic below.
-		return scriptWithIndexRanges(IndexRanges{HighA: aLen}, IndexRanges{HighB: bLen})
+		return edit.NewScript(edit.Range{HighA: aLen}, edit.Range{HighB: bLen})
 	}
 
 	// Create reversed edit script.
 	x := aLen
 	y := bLen
-	var e EditScript
+	var e edit.Script
 	for d := len(trace) - 1; d >= 0; d-- {
 		v := trace[d]
 		k := x - y
@@ -80,24 +82,24 @@ search:
 		prevx := v[max+prevk]
 		prevy := prevx - prevk
 		for x > prevx && y > prevy {
-			e.appendToReversed(IndexRanges{LowA: x - 1, LowB: y - 1, HighA: x, HighB: y})
+			appendToReversed(&e, edit.Range{LowA: x - 1, LowB: y - 1, HighA: x, HighB: y})
 			x--
 			y--
 		}
 		if d > 0 {
-			e.appendToReversed(IndexRanges{LowA: prevx, LowB: prevy, HighA: x, HighB: y})
+			appendToReversed(&e, edit.Range{LowA: prevx, LowB: prevy, HighA: x, HighB: y})
 		}
 		x, y = prevx, prevy
 	}
 
 	// Reverse reversed edit script, to return to natural order.
-	e.reverse()
+	reverse(e)
 
 	// Sanity check
-	for i := 1; i < len(e.IndexRanges); i++ {
-		prevop := e.IndexRanges[i-1].op()
-		currop := e.IndexRanges[i].op()
-		if (prevop == currop) || (prevop == ins && currop != eq) || (currop == del && prevop != eq) {
+	for i := 1; i < len(e.Ranges); i++ {
+		prevop := e.Ranges[i-1].Op()
+		currop := e.Ranges[i].Op()
+		if (prevop == currop) || (prevop == edit.Ins && currop != edit.Eq) || (currop == edit.Del && prevop != edit.Eq) {
 			panic(fmt.Errorf("bad script: %v -> %v", prevop, currop))
 		}
 	}
@@ -105,45 +107,45 @@ search:
 	return e
 }
 
-func (e EditScript) reverse() {
-	for i := 0; i < len(e.IndexRanges)/2; i++ {
-		j := len(e.IndexRanges) - i - 1
-		e.IndexRanges[i], e.IndexRanges[j] = e.IndexRanges[j], e.IndexRanges[i]
+func reverse(e edit.Script) {
+	for i := 0; i < len(e.Ranges)/2; i++ {
+		j := len(e.Ranges) - i - 1
+		e.Ranges[i], e.Ranges[j] = e.Ranges[j], e.Ranges[i]
 	}
 }
 
-func (e *EditScript) appendToReversed(seg IndexRanges) {
-	if len(e.IndexRanges) == 0 {
-		e.IndexRanges = append(e.IndexRanges, seg)
+func appendToReversed(e *edit.Script, seg edit.Range) {
+	if len(e.Ranges) == 0 {
+		e.Ranges = append(e.Ranges, seg)
 		return
 	}
-	u, ok := combineIndexRangess(seg, e.IndexRanges[len(e.IndexRanges)-1])
+	u, ok := combineRanges(seg, e.Ranges[len(e.Ranges)-1])
 	if !ok {
-		e.IndexRanges = append(e.IndexRanges, seg)
+		e.Ranges = append(e.Ranges, seg)
 		return
 	}
-	e.IndexRanges[len(e.IndexRanges)-1] = u
+	e.Ranges[len(e.Ranges)-1] = u
 	return
 }
 
-// combineIndexRangess combines s and t into a single IndexRanges if possible
+// combineRanges combines s and t into a single edit.Range if possible
 // and reports whether it succeeded.
-func combineIndexRangess(s, t IndexRanges) (u IndexRanges, ok bool) {
-	if t.len() == 0 {
+func combineRanges(s, t edit.Range) (u edit.Range, ok bool) {
+	if t.Len() == 0 {
 		return s, true
 	}
-	if s.len() == 0 {
+	if s.Len() == 0 {
 		return t, true
 	}
-	if s.op() != t.op() {
-		return IndexRanges{LowA: -1, HighA: -1, LowB: -1, HighB: -1}, false
+	if s.Op() != t.Op() {
+		return edit.Range{LowA: -1, HighA: -1, LowB: -1, HighB: -1}, false
 	}
-	switch s.op() {
-	case ins:
+	switch s.Op() {
+	case edit.Ins:
 		s.HighB = t.HighB
-	case del:
+	case edit.Del:
 		s.HighA = t.HighA
-	case eq:
+	case edit.Eq:
 		s.HighA = t.HighA
 		s.HighB = t.HighB
 	default:

@@ -4,13 +4,15 @@ import (
 	"context"
 	"reflect"
 	"testing"
+
+	"github.com/pkg/diff/edit"
 )
 
 func TestMyers(t *testing.T) {
 	tests := []struct {
 		name        string
 		a, b        string
-		want        []IndexRanges
+		want        []edit.Range
 		wantStatIns int
 		wantStatDel int
 	}{
@@ -18,7 +20,7 @@ func TestMyers(t *testing.T) {
 			name: "BasicExample",
 			a:    "ABCABBA",
 			b:    "CBABAC",
-			want: []IndexRanges{
+			want: []edit.Range{
 				{LowA: 0, HighA: 2, LowB: 0, HighB: 0},
 				{LowA: 2, HighA: 3, LowB: 0, HighB: 1},
 				{LowA: 3, HighA: 3, LowB: 1, HighB: 2},
@@ -34,7 +36,7 @@ func TestMyers(t *testing.T) {
 			name: "AllDifferent",
 			a:    "ABCDE",
 			b:    "xyz",
-			want: []IndexRanges{
+			want: []edit.Range{
 				{LowA: 0, HighA: 5, LowB: 0, HighB: 0},
 				{LowA: 0, HighA: 0, LowB: 0, HighB: 3},
 			},
@@ -48,7 +50,7 @@ func TestMyers(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			ab := &diffByByte{a: test.a, b: test.b}
 			got := Myers(context.Background(), ab)
-			want := EditScript{IndexRanges: test.want}
+			want := edit.Script{Ranges: test.want}
 
 			if !reflect.DeepEqual(got, want) {
 				// Ironically, it'd be nice to provide a diff between got and want here...

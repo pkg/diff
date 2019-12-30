@@ -74,13 +74,13 @@ func main() {
 		defer cancel()
 	}
 	e := diff.Myers(ctx, ab)
-	e = e.WithContextSize(*unified) // limit amount of output context
+	e = diff.EditScriptWithContextSize(e, *unified) // limit amount of output context
 	opts := []diff.WriteOpt{
 		diff.Names(aName, bName),
 	}
 	if *color {
 		opts = append(opts, diff.TerminalColor())
 	}
-	_, err = e.WriteUnified(os.Stdout, ab, opts...)
+	_, err = diff.WriteUnified(e, os.Stdout, ab, opts...)
 	check(err)
 }
