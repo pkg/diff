@@ -53,6 +53,8 @@ const (
 // WriteUnified writes e to w using unified diff format.
 // ab writes the individual elements. Opts are optional write arguments.
 // WriteUnified returns the number of bytes written and the first error (if any) encountered.
+// Before writing, edit scripts usually have their context reduced,
+// such as by a call to ctxt.Size.
 func WriteUnified(e edit.Script, w io.Writer, ab WriterTo, opts ...WriteOpt) (int, error) {
 	// read opts
 	nameA := "a"

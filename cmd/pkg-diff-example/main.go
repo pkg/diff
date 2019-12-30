@@ -11,6 +11,7 @@ import (
 	"os"
 
 	"github.com/pkg/diff"
+	"github.com/pkg/diff/ctxt"
 	"github.com/pkg/diff/myers"
 )
 
@@ -75,7 +76,7 @@ func main() {
 		defer cancel()
 	}
 	e := myers.Diff(ctx, ab)
-	e = diff.EditScriptWithContextSize(e, *unified) // limit amount of output context
+	e = ctxt.Size(e, *unified) // limit amount of output context
 	opts := []diff.WriteOpt{
 		diff.Names(aName, bName),
 	}

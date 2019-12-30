@@ -1,18 +1,16 @@
-package diff
+// Package ctxt provides routines to reduce the amount of context in an edit script.
+package ctxt
 
 import (
-	"fmt"
-
 	"github.com/pkg/diff/edit"
 )
 
-// WithContextSize returns an edit script preserving only n common elements of context for changes.
+// Size returns an edit script preserving only n common elements of context for changes.
 // The returned edit script may alias the input.
-// If n is negative, WithContextSize panics.
-// To generate a "unified diff", use WithContextSize and then WriteUnified the resulting edit script.
-func EditScriptWithContextSize(e edit.Script, n int) edit.Script {
+// If n is negative, Size panics.
+func Size(e edit.Script, n int) edit.Script {
 	if n < 0 {
-		panic(fmt.Sprintf("EditScript.WithContextSize called with negative n: %d", n))
+		panic("ctxt.Size called with negative n")
 	}
 
 	// Handle small scripts.

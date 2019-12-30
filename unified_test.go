@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/pkg/diff"
+	"github.com/pkg/diff/ctxt"
 	"github.com/pkg/diff/myers"
 	"github.com/sergi/go-diff/diffmatchpatch"
 )
@@ -82,7 +83,7 @@ func TestGolden(t *testing.T) {
 			// Doing it as I have done, the lazy way, mixes concerns: diff algorithm vs unification algorithm
 			// vs unified diff formatting.
 			e := myers.Diff(context.Background(), ab)
-			e = diff.EditScriptWithContextSize(e, 3)
+			e = ctxt.Size(e, 3)
 			buf := new(bytes.Buffer)
 			diff.WriteUnified(e, buf, ab, test.opts...)
 			got := buf.String()

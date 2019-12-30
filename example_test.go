@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/pkg/diff"
+	"github.com/pkg/diff/ctxt"
 	"github.com/pkg/diff/myers"
 )
 
@@ -18,7 +19,7 @@ func Example_testHelper() {
 	if e.IsIdentity() {
 		return
 	}
-	e = diff.EditScriptWithContextSize(e, 1)
+	e = ctxt.Size(e, 1)
 	diff.WriteUnified(e, os.Stdout, ab)
 	// Output:
 	// --- a
