@@ -86,7 +86,10 @@ func TestGolden(t *testing.T) {
 			e := myers.Diff(context.Background(), ab)
 			e = ctxt.Size(e, 3)
 			buf := new(bytes.Buffer)
-			write.Unified(e, buf, ab, test.opts...)
+			_, err := write.Unified(e, buf, ab, test.opts...)
+			if err != nil {
+				t.Fatal(err)
+			}
 			got := buf.String()
 			if test.want != got {
 				t.Logf("%q\n", test.want)
