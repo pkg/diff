@@ -20,13 +20,14 @@ import (
 	"strings"
 
 	"github.com/pkg/diff/ctxt"
+	"github.com/pkg/diff/intern"
 	"github.com/pkg/diff/myers"
 	"github.com/pkg/diff/write"
 )
 
 // lines returns the lines contained in text/filename.
 // text and filename are interpreted as described in the docs for Text.
-func lines(filename string, text interface{}) ([]string, error) {
+func lines(m intern.Strings, filename string, text interface{}) ([]*string, error) {
 	var r io.Reader
 	switch text := text.(type) {
 	case nil:
@@ -45,11 +46,10 @@ func lines(filename string, text interface{}) ([]string, error) {
 	default:
 		return nil, fmt.Errorf("unexpected type %T, want string, []byte, io.Reader, or nil", text)
 	}
-	var x []string
+	var x []*string
 	scan := bufio.NewScanner(r)
 	for scan.Scan() {
-		// TODO: intern? See intern comment in todo.go.
-		x = append(x, scan.Text())
+		x = append(x, m.FromBytes(scan.Bytes()))
 	}
 	return x, scan.Err()
 }
@@ -72,11 +72,12 @@ func addNames(aName, bName string, options []write.Option) []write.Option {
 // a and b each may be nil or may have type string, []byte, or io.Reader.
 // If nil, the text is read from the filename.
 func Text(aFile, bFile string, a, b interface{}, w io.Writer, options ...write.Option) error {
-	aLines, err := lines(aFile, a)
+	m := make(intern.Strings)
+	aLines, err := lines(m, aFile, a)
 	if err != nil {
 		return err
 	}
-	bLines, err := lines(bFile, b)
+	bLines, err := lines(m, bFile, b)
 	if err != nil {
 		return err
 	}
@@ -89,14 +90,14 @@ func Text(aFile, bFile string, a, b interface{}, w io.Writer, options ...write.O
 }
 
 type diffStrings struct {
-	a, b []string
+	a, b []*string
 }
 
 func (ab *diffStrings) LenA() int                                { return len(ab.a) }
 func (ab *diffStrings) LenB() int                                { return len(ab.b) }
 func (ab *diffStrings) Equal(ai, bi int) bool                    { return ab.a[ai] == ab.b[bi] }
-func (ab *diffStrings) WriteATo(w io.Writer, i int) (int, error) { return io.WriteString(w, ab.a[i]) }
-func (ab *diffStrings) WriteBTo(w io.Writer, i int) (int, error) { return io.WriteString(w, ab.b[i]) }
+func (ab *diffStrings) WriteATo(w io.Writer, i int) (int, error) { return io.WriteString(w, *ab.a[i]) }
+func (ab *diffStrings) WriteBTo(w io.Writer, i int) (int, error) { return io.WriteString(w, *ab.b[i]) }
 
 // Slices diffs slices a and b and writes the result to w.
 // It uses fmt.Print to print the elements of a and b.
