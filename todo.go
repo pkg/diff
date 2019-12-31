@@ -29,3 +29,15 @@ package diff
 // TODO: consider adding an "it just works" test helper that accepts two slices (via interface{}),
 // diffs them using Strings or Bytes or Slices (using reflect.DeepEqual) as appropriate,
 // and calls t.Errorf with a generated diff if they're not equal.
+
+// TODO: add support for hunk/section/function headers.
+// This will probably take the form of a write option
+// providing access to the necessary data,
+// and a package that helps calculate the necessary data.
+// There are several ways to do that calculation...
+
+// TODO: add copyright headers at top of all files
+
+// TODO: hook up some CI
+
+// TODO: add more badges? see github.com/pkg/errors for some likely candidates.
