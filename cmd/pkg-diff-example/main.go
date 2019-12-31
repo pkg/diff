@@ -5,6 +5,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 
@@ -33,18 +34,37 @@ func main() {
 
 	flag.Usage = usage
 	flag.Parse()
-	if len(flag.Args()) != 2 {
+
+	var aName, bName string
+	var a, b interface{}
+	switch flag.NArg() {
+	case 2:
+		// A human has invoked us.
+		aName, bName = flag.Arg(0), flag.Arg(1)
+	case 7, 9:
+		// We are a git external diff tool.
+		// We have been passed the following arguments:
+		//   path old-file old-hex old-mode new-file new-hex new-mode [new-path similarity-metrics]
+		aName = "a/" + flag.Arg(0)
+		if flag.NArg() == 7 {
+			bName = "b/" + flag.Arg(0)
+		} else {
+			bName = "b/" + flag.Arg(7)
+		}
+		var err error
+		a, err = ioutil.ReadFile(flag.Arg(1))
+		check(err)
+		b, err = ioutil.ReadFile(flag.Arg(4))
+		check(err)
+	default:
 		flag.Usage()
 	}
-
-	aName := flag.Arg(0)
-	bName := flag.Arg(1)
 
 	var opts []write.Option
 	if *color {
 		opts = append(opts, write.TerminalColor())
 	}
 
-	err := diff.Text(aName, bName, nil, nil, os.Stdout, opts...)
+	err := diff.Text(aName, bName, a, b, os.Stdout, opts...)
 	check(err)
 }
