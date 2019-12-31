@@ -7,7 +7,7 @@ import (
 	"github.com/pkg/diff/edit"
 )
 
-// A Pair type supports writing a unified diff, element by element.
+// A Pair supports writing a unified diff, element by element.
 // A is the initial state; B is the final state.
 type Pair interface {
 	// WriteATo writes the element a[aᵢ] to w.

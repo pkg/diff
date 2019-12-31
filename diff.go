@@ -1,13 +1,12 @@
-// Package diff and its subpackages create, modify, and print diffs.
-//
 // Package diff contains high level routines that generate a textual diff.
-// It is implemented in terms of the diff/* subpackages.
+//
+// It is implemented in terms of the other packages in this module.
 // If you want fine-grained control,
-// want to inspect an diff programmatically,
+// want to inspect a diff programmatically,
 // want to provide a context for cancellation,
 // need to diff gigantic files that don't fit in memory,
 // or want to diff unusual things,
-// use the subpackages.
+// use the lower level packages.
 package diff
 
 import (
@@ -66,8 +65,10 @@ func addNames(aName, bName string, options []write.Option) []write.Option {
 }
 
 // Text diffs a and b and writes the result to w.
-// It treats a and b as text, and splits them into lines using bufio.ScanLines.
+// It treats a and b as text, and splits their contents
+// into lines using bufio.ScanLines.
 // aFile and bFile are filenames to use in the output.
+//
 // a and b each may be nil or may have type string, []byte, or io.Reader.
 // If nil, the text is read from the filename.
 func Text(aFile, bFile string, a, b interface{}, w io.Writer, options ...write.Option) error {

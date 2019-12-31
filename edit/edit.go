@@ -1,6 +1,6 @@
 // Package edit provides edit scripts.
 // Edit scripts are a core notion for diffs.
-// The represent a way to go from A to B by a sequence
+// They represent a way to go from A to B by a sequence
 // of insertions, deletions, and equal elements.
 package edit
 
@@ -31,7 +31,7 @@ func (s *Script) IsIdentity() bool {
 	return true
 }
 
-// Stat reports the number of insertions and deletions in s.
+// Stat reports the total number of insertions and deletions in s.
 func (s *Script) Stat() (ins, del int) {
 	for _, r := range s.Ranges {
 		switch {
@@ -78,7 +78,7 @@ func (r *Range) IsEqual() bool {
 	return r.HighB-r.LowB == r.HighA-r.LowA
 }
 
-// An Op is a edit operation used to transform A into B.
+// An Op is a edit operation in a Script.
 type Op int8
 
 //go:generate stringer -type Op
