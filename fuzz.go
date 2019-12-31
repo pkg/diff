@@ -29,7 +29,7 @@ func Fuzz(data []byte) int {
 	ab := &IndividualBytes{a: a, b: b}
 	s := myers.Diff(context.Background(), ab)
 	s = ctxt.Size(s, sz)
-	_, err := write.Unified(s, ioutil.Discard, ab)
+	err := write.Unified(s, ioutil.Discard, ab)
 	if err != nil {
 		panic(err)
 	}

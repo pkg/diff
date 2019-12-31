@@ -1,6 +1,7 @@
 package write
 
 import (
+	"bufio"
 	"fmt"
 	"io"
 
@@ -21,7 +22,7 @@ type Pair interface {
 // Unified returns the number of bytes written and the first error (if any) encountered.
 // Before writing, edit scripts usually have their context reduced,
 // such as by a call to ctxt.Size.
-func Unified(e edit.Script, w io.Writer, ab Pair, opts ...Option) (int, error) {
+func Unified(e edit.Script, w io.Writer, ab Pair, opts ...Option) error {
 	// read opts
 	nameA := "a"
 	nameB := "b"
@@ -39,19 +40,17 @@ func Unified(e edit.Script, w io.Writer, ab Pair, opts ...Option) (int, error) {
 		}
 	}
 
-	ew := newErrWriter(w)
-	// TODO: Wrap w in a bufio.Writer? And then use w.WriteByte below instead of w.Write.
-	// Maybe bufio.Writer is enough and we should entirely ditch newErrWriter.
+	bw := bufio.NewWriter(w)
 
 	needsColorReset := false
 
 	// per-file header
 	if color {
-		ew.WriteString(ansiBold)
+		bw.WriteString(ansiBold)
 		needsColorReset = true
 	}
-	fmt.Fprintf(ew, "--- %s\n", nameA)
-	fmt.Fprintf(ew, "+++ %s\n", nameB)
+	fmt.Fprintf(bw, "--- %s\n", nameA)
+	fmt.Fprintf(bw, "+++ %s\n", nameB)
 
 	for i := 0; i < len(e.Ranges); {
 		// Peek into the future to learn the line ranges for this chunk of output.
@@ -92,12 +91,12 @@ func Unified(e edit.Script, w io.Writer, ab Pair, opts ...Option) (int, error) {
 		// and we can have EditScript methods to populate it somehow?
 		if color {
 			if needsColorReset {
-				ew.WriteString(ansiReset)
+				bw.WriteString(ansiReset)
 			}
-			ew.WriteString(ansiFgBlue)
+			bw.WriteString(ansiFgBlue)
 			needsColorReset = true
 		}
-		fmt.Fprintf(ew, "@@ -%s +%s @@\n", ar, br)
+		fmt.Fprintf(bw, "@@ -%s +%s @@\n", ar, br)
 
 		// Print prefixed lines.
 		for k := i; k <= j; k++ {
@@ -105,35 +104,35 @@ func Unified(e edit.Script, w io.Writer, ab Pair, opts ...Option) (int, error) {
 			switch seg.Op() {
 			case edit.Eq:
 				if needsColorReset {
-					ew.WriteString(ansiReset)
+					bw.WriteString(ansiReset)
 				}
 				for m := seg.LowA; m < seg.HighA; m++ {
 					// " a[m]\n"
-					ew.WriteByte(' ')
-					ab.WriteATo(ew, m)
-					ew.WriteByte('\n')
+					bw.WriteByte(' ')
+					ab.WriteATo(bw, m)
+					bw.WriteByte('\n')
 				}
 			case edit.Del:
 				if color {
-					ew.WriteString(ansiFgRed)
+					bw.WriteString(ansiFgRed)
 					needsColorReset = true
 				}
 				for m := seg.LowA; m < seg.HighA; m++ {
 					// "-a[m]\n"
-					ew.WriteByte('-')
-					ab.WriteATo(ew, m)
-					ew.WriteByte('\n')
+					bw.WriteByte('-')
+					ab.WriteATo(bw, m)
+					bw.WriteByte('\n')
 				}
 			case edit.Ins:
 				if color {
-					ew.WriteString(ansiFgGreen)
+					bw.WriteString(ansiFgGreen)
 					needsColorReset = true
 				}
 				for m := seg.LowB; m < seg.HighB; m++ {
 					// "+b[m]\n"
-					ew.WriteByte('+')
-					ab.WriteBTo(ew, m)
-					ew.WriteByte('\n')
+					bw.WriteByte('+')
+					ab.WriteBTo(bw, m)
+					bw.WriteByte('\n')
 				}
 			}
 		}
@@ -147,7 +146,7 @@ func Unified(e edit.Script, w io.Writer, ab Pair, opts ...Option) (int, error) {
 	// Always finish the output with no color, to prevent "leaking" the
 	// color into any output that follows a diff.
 	if needsColorReset {
-		ew.WriteString(ansiReset)
+		bw.WriteString(ansiReset)
 	}
 
 	// TODO:
@@ -156,7 +155,7 @@ func Unified(e edit.Script, w io.Writer, ab Pair, opts ...Option) (int, error) {
 	// and the following line in the chunk has the literal text (starting in the first column):
 	// '\ No newline at end of file'
 
-	return ew.wrote, ew.Error()
+	return bw.Flush()
 }
 
 type lineRange struct {

@@ -84,7 +84,7 @@ func Text(aFile, bFile string, a, b interface{}, w io.Writer, options ...write.O
 	s := myers.Diff(context.Background(), ab)
 	s = ctxt.Size(s, 3)
 	opts := addNames(aFile, bFile, options)
-	_, err = write.Unified(s, w, ab, opts...)
+	err = write.Unified(s, w, ab, opts...)
 	return err
 }
 
@@ -110,7 +110,7 @@ func Slices(aName, bName string, a, b interface{}, w io.Writer, options ...write
 	s := myers.Diff(context.Background(), ab)
 	s = ctxt.Size(s, 3)
 	opts := addNames(aName, bName, options)
-	_, err := write.Unified(s, w, ab, opts...)
+	err := write.Unified(s, w, ab, opts...)
 	return err
 }
 
