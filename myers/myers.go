@@ -33,9 +33,11 @@ func Diff(ctx context.Context, ab Pair) edit.Script {
 
 	max := aLen + bLen
 	if max < 0 {
-		panic("overflow in diff.Myers")
+		panic("overflow in myers.Diff")
 	}
-	v := make([]int, 2*max+1) // indices: -max .. 0 .. max
+	// v has indices -max .. 0 .. max
+	// access to elements of v have the form max + actual offset
+	v := make([]int, 2*max+1)
 
 	var trace [][]int
 search:
@@ -45,11 +47,11 @@ search:
 			return edit.Script{}
 		}
 
-		// TODO: this seems like it will frequently be bigger than necessary.
-		// Use sparse lookup? prefixes?
-		vc := make([]int, 2*max+1)
-		copy(vc, v)
-		trace = append(trace, vc)
+		// append the middle (populated) elements of v to trace
+		middle := v[max-d : max+d+1]
+		vcopy := make([]int, len(middle))
+		copy(vcopy, middle)
+		trace = append(trace, vcopy)
 
 		for k := -d; k <= d; k += 2 {
 			var x int
@@ -83,15 +85,20 @@ search:
 	y := bLen
 	var e edit.Script
 	for d := len(trace) - 1; d >= 0; d-- {
+		// v has indices -d .. 0 .. d
+		// access to elements of v have the form d + actual offset
 		v := trace[d]
 		k := x - y
 		var prevk int
-		if k == -d || (k != d && v[max+k-1] < v[max+k+1]) {
+		if k == -d || (k != d && v[d+k-1] < v[d+k+1]) {
 			prevk = k + 1
 		} else {
 			prevk = k - 1
 		}
-		prevx := v[max+prevk]
+		var prevx int
+		if idx := d + prevk; 0 <= idx && idx < len(v) {
+			prevx = v[idx]
+		}
 		prevy := prevx - prevk
 		for x > prevx && y > prevy {
 			appendToReversed(&e, edit.Range{LowA: x - 1, LowB: y - 1, HighA: x, HighB: y})
