@@ -1,6 +1,6 @@
 # diff [![GoDoc](https://godoc.org/github.com/pkg/diff?status.svg)](http://godoc.org/github.com/pkg/diff)
 
-Module diff can be used to create, modify, and print diffs.
+Module github.com/pkg/diff can be used to create, modify, and print diffs.
 
 The top level package, `diff`, contains convenience functions for the most common uses.
 
