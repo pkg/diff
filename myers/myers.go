@@ -20,6 +20,10 @@ type Pair interface {
 }
 
 // Diff calculates an edit.Script for ab using the Myers diff algorithm.
+// This implementation uses the algorithm described in the first half
+// of Myers' paper, which requires quadratric space.
+// (An implementation of the linear space version is forthcoming.)
+//
 // Because diff calculation can be expensive, Myers supports cancellation via ctx.
 func Diff(ctx context.Context, ab Pair) edit.Script {
 	aLen := ab.LenA()
