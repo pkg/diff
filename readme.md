@@ -23,6 +23,7 @@ Useful background reading about diffs:
 * [Neil Fraser's website](https://neil.fraser.name/writing/diff)
 * [Myers diff paper](http://www.xmailserver.org/diff2.pdf)
 * [Guido Van Rossum's reverse engineering of the unified diff format](https://www.artima.com/weblogs/viewpost.jsp?thread=164293)
+* [The If Works](https://blog.jcoglan.com/) blog entries about diff algorithms and implementations
 
 This module has not yet reached v1.0.
 There are two main sticking points; see issues #18 and #19.
