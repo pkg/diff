@@ -25,5 +25,5 @@ Useful background reading about diffs:
 * [Guido Van Rossum's reverse engineering of the unified diff format](https://www.artima.com/weblogs/viewpost.jsp?thread=164293)
 * [The If Works](https://blog.jcoglan.com/) blog entries about diff algorithms and implementations
 
-This module has not yet reached v1.0.
-There are two main sticking points; see issues #18 and #19.
+This module has not yet reached v1.0;
+the API is not yet settled (issue #18).
