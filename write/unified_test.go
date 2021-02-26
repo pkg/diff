@@ -10,7 +10,6 @@ import (
 	"github.com/pkg/diff/ctxt"
 	"github.com/pkg/diff/myers"
 	"github.com/pkg/diff/write"
-	"github.com/sergi/go-diff/diffmatchpatch"
 )
 
 var goldenTests = []struct {
@@ -94,12 +93,9 @@ func TestGolden(t *testing.T) {
 			if test.want != got {
 				t.Logf("%q\n", test.want)
 				t.Logf("%q\n", got)
-				dmp := diffmatchpatch.New()
-				delta := dmp.DiffMain(test.want, got, false)
-				t.Errorf("bad diff: a=%q b=%q\n\ngot:\n%s\nwant:\n%s\ndiff:\n%s\n",
+				t.Errorf("bad diff: a=%q b=%q\n\ngot:\n%s\nwant:\n%s",
 					test.a, test.b,
 					got, test.want,
-					dmp.DiffPrettyText(delta),
 				)
 			}
 		})
