@@ -28,6 +28,9 @@ type Pair interface {
 func Diff(ctx context.Context, ab Pair) edit.Script {
 	aLen := ab.LenA()
 	bLen := ab.LenB()
+	if aLen == 0 && bLen == 0 {
+		return edit.NewScript()
+	}
 	if aLen == 0 {
 		return edit.NewScript(edit.Range{HighB: bLen})
 	}

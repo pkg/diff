@@ -44,6 +44,14 @@ func TestMyers(t *testing.T) {
 			wantStatIns: 3,
 			wantStatDel: 5,
 		},
+		{
+			name:        "AllEmpty",
+			a:           "",
+			b:           "",
+			want:        nil,
+			wantStatIns: 0,
+			wantStatDel: 0,
+		},
 		// TODO: add more tests
 	}
 
